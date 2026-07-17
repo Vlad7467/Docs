@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>🕵️ Хакерская Империя</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0A0E17;
+            color: #E8F0EA;
+            overflow: hidden;
+            height: 100vh;
+        }
+        #game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            background: #0A0E17;
+        }
+        #three-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+        #three-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* UI поверх 3D */
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16px 20px 20px;
+        }
+        .ui-overlay > * { pointer-events: auto; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10,14,23,0.6);
+            backdrop-filter: blur(8px);
+            padding: 10px 16px;
+            border-radius: 60px;
+            border: 1px solid rgba(0,255,65,0.1);
+        }
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 16px;
+            background: linear-gradient(135deg, #00FF41, #00CC33);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stats {
+            display: flex;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .stats span {
+            background: rgba(0,255,65,0.06);
+            padding: 4px 14px;
+            border-radius: 30px;
+            border: 1px solid rgba(0,255,65,0.08);
+        }
+        .stats .coins { color: #FFD700; }
+        .stats .energy { color: #00FF41; }
+
+        .boss-area {
+            background: rgba(10,14,23,0.5);
+            backdrop-filter: blur(4px);
+            padding: 12px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,42,109,0.15);
+            margin-top: 10px;
+        }
+        .boss-hp-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: #FF2A6D;
+            margin-bottom: 6px;
+        }
+        .boss-track {
+            height: 10px;
+            background: rgba(255,0,0,0.15);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255,0,0,0.2);
+        }
+        .boss-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FF2A6D, #FF6B6B);
+            border-radius: 10px;
+            transition: width 0.4s ease;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(255,42,109,0.3);
+        }
+
+        .duel-area {
+            display: flex;
+            gap: 16px;
+            background: rgba(10,14,23,0.4);
+            backdrop-filter: blur(4px);
+            padding: 10px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(0,255,65,0.06);
+            margin-top: 8px;
+        }
+        .duel-side {
+            flex: 1;
+            text-align: center;
+        }
+        .duel-side .label {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        .duel-side .label.player { color: #00FF41; }
+        .duel-side .label.boss { color: #FF2A6D; }
+        .duel-track {
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .duel-track .fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .duel-track .fill.player-fill { background: #00FF41; }
+        .duel-track .fill.boss-fill { background: #FF2A6D; }
+        .duel-perc {
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+        .btn-hack {
+            flex: 1;
+            padding: 16px 0;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 18px;
+            background: linear-gradient(135deg, #00FF41, #00BB33);
+            border: none;
+            border-radius: 60px;
+            color: #0A0E17;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(0,255,65,0.2);
+            transition: transform 0.15s;
+            letter-spacing: 1px;
+        }
+        .btn-hack:active { transform: scale(0.95); }
+        .btn-hack:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .btn-reset {
+            padding: 16px 24px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 60px;
+            color: #88B8A0;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-reset:hover { background: rgba(255,255,255,0.08); }
+
+        .status {
+            margin-top: 6px;
+            text-align: center;
+            font-size: 14px;
+            color: #88B8A0;
+            min-height: 22px;
+            text-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        .status.win { color: #00FF41; }
+        .status.lose { color: #FF2A6D; }
+
+        /* === ВИЗУАЛИЗАЦИЯ КОДА === */
+        #code-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            color: #00FF41;
+            text-shadow: 0 0 10px rgba(0,255,65,0.3);
+        }
+        .code-line {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 14px;
+            opacity: 0;
+            animation: codeFly 1.2s ease-out forwards;
+        }
+        @keyframes codeFly {
+            0% { opacity: 1; transform: translateY(20px) scale(0.9); }
+            100% { opacity: 0; transform: translateY(-60px) scale(1.1); }
+        }
+        .cursor-blink {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #00FF41;
+            animation: blink 0.8s step-end infinite;
+            margin-left: 2px;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Тост */
+        .toast-container {
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            width: 90%;
+            max-width: 400px;
+            pointer-events: none;
+        }
+        .toast {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0,255,65,0.1);
+            border-radius: 16px;
+            padding: 12px 20px;
+            color: #E8F0EA;
+            font-size: 14px;
+            font-weight: 500;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.2s forwards;
+            text-align: center;
+        }
+        @keyframes toastIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes toastOut { to { opacity:0; transform:translateY(-20px); } }
+
+        @media (max-width:480px) {
+            .logo { font-size: 13px; }
+            .stats { font-size: 12px; gap:6px; }
+            .stats span { padding:2px 10px; }
+            .btn-hack { font-size:15px; padding:14px 0; }
+            .boss-hp-label { font-size:11px; }
+            .duel-perc { font-size:11px; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="game-container">
+    <div id="three-container"></div>
+
+    <div class="ui-overlay">
+        <!-- Верх -->
+        <div>
+            <div class="header">
+                <div class="logo">🕵️ Хакерская Империя</div>
+                <div class="stats">
+                    <span class="coins">💰 <span id="coinsDisplay">0</span></span>
+                    <span class="energy">⚡ <span id="energyDisplay">100</span></span>
+                </div>
+            </div>
+            <div class="boss-area">
+                <div class="boss-hp-label">
+                    <span>🐻 Кибер Медведь</span>
+                    <span id="bossHpText">100%</span>
+                </div>
+                <div class="boss-track">
+                    <div class="boss-fill" id="bossHpFill" style="width:100%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Низ -->
+        <div>
+            <div class="duel-area">
+                <div class="duel-side">
+                    <div class="label player">🧑‍💻 Игрок</div>
+                    <div class="duel-track"><div class="fill player-fill" id="playerProgress" style="width:0%;"></div></div>
+                    <div class="duel-perc" id="playerPerc">0%</div>
+                </div>
+                <div class="duel-side">
+                    <div class="label boss">🐻 Медведь</div>
+                    <div class="duel-track"><div class="fill boss-fill" id="bossProgress" style="width:0%;"></div></div>
+                    <div class="duel-perc" id="bossPerc">0%</div>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn-hack" id="hackBtn">🔓 ВЗЛОМАТЬ</button>
+                <button class="btn-reset" id="resetBtn">🔄</button>
+            </div>
+            <div class="status" id="gameStatus">Нажми «Взломать», чтобы начать дуэль!</div>
+        </div>
+    </div>
+
+    <!-- Оверлей с кодом -->
+    <div id="code-overlay"></div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Three.js -->
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+    // ============================================================
+    // IMPORTS
+    // ============================================================
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // ============================================================
+    // DOM references
+    // ============================================================
+    const container = document.getElementById('three-container');
+    const coinsDisplay = document.getElementById('coinsDisplay');
+    const energyDisplay = document.getElementById('energyDisplay');
+    const bossHpFill = document.getElementById('bossHpFill');
+    const bossHpText = document.getElementById('bossHpText');
+    const playerProgress = document.getElementById('playerProgress');
+    const bossProgress = document.getElementById('bossProgress');
+    const playerPerc = document.getElementById('playerPerc');
+    const bossPerc = document.getElementById('bossPerc');
+    const hackBtn = document.getElementById('hackBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const gameStatus = document.getElementById('gameStatus');
+    const toastContainer = document.getElementById('toastContainer');
+    const codeOverlay = document.getElementById('code-overlay');
+
+    // ============================================================
+    // STATE
+    // ============================================================
+    const state = {
+        coins: 0,
+        energy: 100,
+        bossHp: 100,
+        playerDuel: 0,
+        bossDuel: 0,
+        isDuelRunning: false,
+        isDuelFinished: false,
+        winner: null,
+        hackCooldown: false,
+    };
+
+    // ============================================================
+    // TOAST
+    // ============================================================
+    function showToast(msg, icon = '✅') {
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.innerHTML = `${icon} ${msg}`;
+        toastContainer.appendChild(el);
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 2500);
+    }
+
+    // ============================================================
+    // UPDATE UI
+    // ============================================================
+    function updateUI() {
+        coinsDisplay.textContent = state.coins;
+        energyDisplay.textContent = state.energy;
+        bossHpFill.style.width = state.bossHp + '%';
+        bossHpText.textContent = Math.round(state.bossHp) + '%';
+        playerProgress.style.width = state.playerDuel + '%';
+        bossProgress.style.width = state.bossDuel + '%';
+        playerPerc.textContent = Math.round(state.playerDuel) + '%';
+        bossPerc.textContent = Math.round(state.bossDuel) + '%';
+        hackBtn.disabled = state.energy <= 0 || state.isDuelFinished || state.hackCooldown;
+    }
+
+    // ============================================================
+    // CODE OVERLAY – визуализация кода
+    // ============================================================
+    const codeSnippets = [
+        '> nmap -sV 192.168.1.1',
+        '> SSH connection established',
+        '> Decrypting SSL... 87%',
+        '> Firewall bypassed',
+        '> Credentials found: admin:123',
+        '> SQL injection successful',
+        '> Backdoor installed',
+        '> System compromised',
+        '> Exploit running...',
+        '> Root access granted',
+        '> Port 443 open',
+        '> Injecting payload...',
+        '> Buffer overflow detected',
+        '> Hash cracked: 5d41402abc4b2a76b9719d911017c592',
+        '> Access granted to mainframe',
+    ];
+
+    function showCodeLines(count = 3) {
+        const overlay = codeOverlay;
+        const rect = overlay.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+
+        for (let i = 0; i < count; i++) {
+            const line = document.createElement('div');
+            line.className = 'code-line';
+            const snippet = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+            const x = Math.random() * (w - 200) + 20;
+            const y = Math.random() * (h - 100) + 50;
+            const delay = Math.random() * 0.4;
+            line.textContent = snippet;
+            line.style.left = x + 'px';
+            line.style.top = y + 'px';
+            line.style.animationDelay = delay + 's';
+            line.style.color = `hsl(${120 + Math.random() * 30}, 100%, ${50 + Math.random() * 30}%)`;
+            line.style.fontSize = (12 + Math.random() * 8) + 'px';
+            overlay.appendChild(line);
+            setTimeout(() => {
+                if (line.parentNode) line.remove();
+            }, 2000 + delay * 1000);
+        }
+    }
+
+    // ============================================================
+    // THREE.JS
+    // ============================================================
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0A0E17);
+    scene.fog = new THREE.Fog(0x0A0E17, 2, 6);
+
+    const camera = new THREE.PerspectiveCamera(35, container.clientWidth / container.clientHeight, 0.1, 10);
+    camera.position.set(0, 0.8, 2.8);
+    camera.lookAt(0, 0.4, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = false;
+    controls.autoRotate = false;
+    controls.target.set(0, 0.4, 0);
+    controls.enableZoom = false;
+    controls.enablePan = false;
+    controls.update();
+
+    // Lights
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    keyLight.position.set(2, 3, 3);
+    keyLight.castShadow = true;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x4466ff, 0.8);
+    fillLight.position.set(-2, 1, -2);
+    scene.add(fillLight);
+
+    const ambient = new THREE.AmbientLight(0x404060, 0.6);
+    scene.add(ambient);
+
+    const neonGreen = new THREE.PointLight(0x00ff41, 1.0, 5);
+    neonGreen.position.set(0, -0.5, 2);
+    scene.add(neonGreen);
+
+    const neonPink = new THREE.PointLight(0xff2a6d, 0.7, 4);
+    neonPink.position.set(1.2, 0.8, 1);
+    scene.add(neonPink);
+
+    // Ground
+    const gridHelper = new THREE.GridHelper(4, 16, 0x00ff41, 0x00ff41);
+    gridHelper.position.y = -0.5;
+    gridHelper.material.transparent = true;
+    gridHelper.material.opacity = 0.15;
+    scene.add(gridHelper);
+
+    const ground = new THREE.Mesh(
+        new THREE.CircleGeometry(2.5, 32),
+        new THREE.ShadowMaterial({ opacity: 0.3 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.49;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Decorative neon circles
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x00ff41, transparent: true, opacity: 0.1 });
+    for (let i = 0; i < 6; i++) {
+        const points = [];
+        const radius = 0.8 + i * 0.3;
+        for (let a = 0; a <= Math.PI * 2; a += 0.1) {
+            points.push(new THREE.Vector3(Math.cos(a) * radius, -0.45 + i * 0.08, Math.sin(a) * radius));
+        }
+        const geom = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.Line(geom, lineMat);
+        scene.add(line);
+    }
+
+    // Model loading
+    let model = null;
+    let modelReady = false;
+    const loader = new GLTFLoader();
+    const MODEL_PATH = 'assets/models/cyber-bear.glb';
+
+    loader.load(
+        MODEL_PATH,
+        (gltf) => {
+            model = gltf.scene;
+            model.scale.set(1.5, 1.5, 1.5);
+            model.position.y = 0.1;
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            scene.add(model);
+            modelReady = true;
+            showToast('3D-модель загружена!', '🤖');
+        },
+        undefined,
+        () => {
+            console.warn('Model not loaded, using fallback');
+            createFallback();
+        }
+    );
+
+    function createFallback() {
+        const geo = new THREE.BoxGeometry(0.8, 1.2, 0.6);
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0x3A2A1A,
+            emissive: 0xFF2A6D,
+            emissiveIntensity: 0.3,
+            metalness: 0.7,
+            roughness: 0.3,
+        });
+        const cube = new THREE.Mesh(geo, mat);
+        cube.castShadow = true;
+        cube.position.y = 0.5;
+        scene.add(cube);
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0xFF2A6D, emissive: 0xFF2A6D, emissiveIntensity: 0.8 });
+        const eyeGeo = new THREE.SphereGeometry(0.1, 8, 8);
+        const e1 = new THREE.Mesh(eyeGeo, eyeMat);
+        e1.position.set(-0.2, 0.2, 0.35);
+        cube.add(e1);
+        const e2 = new THREE.Mesh(eyeGeo, eyeMat);
+        e2.position.set(0.2, 0.2, 0.35);
+        cube.add(e2);
+        model = cube;
+        modelReady = true;
+    }
+
+    // Particle system (3D sparks)
+    const particleSystem = {
+        particles: [],
+        init() {
+            this.geometry = new THREE.BufferGeometry();
+            this.material = new THREE.PointsMaterial({
+                color: 0x00ff41,
+                size: 0.05,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                opacity: 0.8,
+            });
+            this.points = new THREE.Points(this.geometry, this.material);
+            scene.add(this.points);
+        },
+        emit(pos, count = 20, color = 0x00ff41) {
+            const positions = [];
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                const dx = (Math.random() - 0.5) * 0.6;
+                const dy = (Math.random() - 0.5) * 0.6;
+                const dz = (Math.random() - 0.5) * 0.6;
+                positions.push(pos.x + dx, pos.y + dy, pos.z + dz);
+                const c = new THREE.Color(color);
+                colors.push(c.r, c.g, c.b);
+            }
+            const oldPos = this.points.geometry.attributes.position?.array || [];
+            const newPos = new Float32Array([...oldPos, ...positions]);
+            this.points.geometry.setAttribute('position', new THREE.BufferAttribute(newPos, 3));
+            this.points.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+            this.points.geometry.attributes.position.needsUpdate = true;
+        },
+        update() {
+            // Просто вращаем или ничего не делаем, но чтобы не перегружать, оставляем как есть
+        }
+    };
+    particleSystem.init();
+
+    // ============================================================
+    // GAME LOGIC
+    // ============================================================
+    function doHack() {
+        if (state.isDuelFinished || state.energy <= 0 || state.hackCooldown) return;
+
+        if (!state.isDuelRunning) {
+            state.isDuelRunning = true;
+            state.isDuelFinished = false;
+            state.playerDuel = 0;
+            state.bossDuel = 0;
+            state.winner = null;
+            gameStatus.textContent = '⚔️ Дуэль началась! Взламывай!';
+            gameStatus.className = 'status';
+            showToast('Дуэль с Кибер Медведем началась!', '⚔️');
+            // Показываем код при старте
+            showCodeLines(5);
+            updateUI();
+            return;
+        }
+
+        state.hackCooldown = true;
+        hackBtn.disabled = true;
+
+        const gain = 3 + Math.floor(Math.random() * 10);
+        state.playerDuel = Math.min(100, state.playerDuel + gain);
+        state.energy = Math.max(0, state.energy - 1);
+        state.coins += 1;
+
+        // Визуальный эффект — подсветка модели
+        if (model) {
+            model.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    const origEmissive = child.material.emissive ? child.material.emissive.clone() : null;
+                    child.material.emissive = new THREE.Color(0x00ff41);
+                    child.material.emissiveIntensity = 1.0;
+                    setTimeout(() => {
+                        if (child.material) {
+                            child.material.emissive = origEmissive || new THREE.Color(0x000000);
+                            child.material.emissiveIntensity = 0.0;
+                        }
+                    }, 300);
+                }
+            });
+            const pos = new THREE.Vector3(0, 0.5, 0);
+            particleSystem.emit(pos, 15, 0x00ff41);
+        }
+
+        // Показываем строки кода при каждом взломе
+        showCodeLines(2 + Math.floor(Math.random() * 3));
+
+        if (state.playerDuel >= 100) {
+            finishDuel('player');
+        }
+
+        if (state.isDuelRunning && !state.isDuelFinished) {
+            const bossGain = 0.8 + Math.random() * 1.8;
+            state.bossDuel = Math.min(100, state.bossDuel + bossGain);
+            if (state.bossDuel >= 100 && state.playerDuel < 100) {
+                finishDuel('boss');
+            }
+        }
+
+        updateUI();
+
+        setTimeout(() => {
+            state.hackCooldown = false;
+            hackBtn.disabled = state.isDuelFinished || state.energy <= 0;
+        }, 300);
+    }
+
+    function finishDuel(winner) {
+        if (state.isDuelFinished) return;
+        state.isDuelFinished = true;
+        state.isDuelRunning = false;
+        state.winner = winner;
+
+        if (winner === 'player') {
+            const reward = 50 + Math.floor(Math.random() * 50);
+            state.coins += reward;
+            const bossDmg = 20 + Math.floor(Math.random() * 30);
+            state.bossHp = Math.max(0, state.bossHp - bossDmg);
+            gameStatus.textContent = `🏆 Победа! +${reward} монет!`;
+            gameStatus.className = 'status win';
+            showToast(`🎉 Вы взломали систему! +${reward} монет`, '🏆');
+            if (model) {
+                const pos = new THREE.Vector3(0, 0.5, 0);
+                particleSystem.emit(pos, 30, 0x00ff41);
+            }
+            if (state.bossHp <= 0) {
+                showToast('💀 Кибер Медведь повержен!', '👾');
+                gameStatus.textContent = '🎉 БОСС ПОБЕЖДЁН! +500 монет!';
+                state.coins += 500;
+                state.bossHp = 0;
+                if (model) {
+                    const pos = new THREE.Vector3(0, 0.5, 0);
+                    particleSystem.emit(pos, 50, 0xff2a6d);
+                }
+            }
+            // Показываем код победы
+            showCodeLines(5);
+        } else {
+            const penalty = 10 + Math.floor(Math.random() * 15);
+            state.coins = Math.max(0, state.coins - penalty);
+            gameStatus.textContent = `💀 Поражение! -${penalty} монет`;
+            gameStatus.className = 'status lose';
+            showToast(`💀 Кибер Медведь взломал первым! -${penalty} монет`, '💀');
+            showCodeLines(3);
+        }
+
+        updateUI();
+        hackBtn.disabled = true;
+    }
+
+    function resetGame() {
+        state.isDuelRunning = false;
+        state.isDuelFinished = false;
+        state.winner = null;
+        state.playerDuel = 0;
+        state.bossDuel = 0;
+        state.energy = 100;
+        state.hackCooldown = false;
+        if (state.bossHp <= 0) {
+            state.bossHp = 100;
+            state.coins = Math.max(0, state.coins - 100);
+        }
+        gameStatus.textContent = '🔄 Перезапущено. Нажми «Взломать»!';
+        gameStatus.className = 'status';
+        hackBtn.disabled = false;
+        updateUI();
+        showToast('Игра сброшена', '🔄');
+        camera.position.set(0, 0.8, 2.8);
+        controls.target.set(0, 0.4, 0);
+        controls.update();
+        // Очистить оверлей кода
+        codeOverlay.innerHTML = '';
+    }
+
+    hackBtn.addEventListener('click', doHack);
+    resetBtn.addEventListener('click', resetGame);
+
+    // ============================================================
+    // RESIZE
+    // ============================================================
+    function resize() {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+    }
+    window.addEventListener('resize', resize);
+
+    // ============================================================
+    // ANIMATION LOOP
+    // ============================================================
+    let modelBreathe = 0;
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if (modelReady && model) {
+            modelBreathe += 0.02;
+            const breath = Math.sin(modelBreathe) * 0.01;
+            model.position.y = 0.1 + breath;
+            if (state.isDuelRunning && !state.isDuelFinished) {
+                model.rotation.z = Math.sin(modelBreathe * 1.5) * 0.015;
+            } else {
+                model.rotation.z = 0;
+            }
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    updateUI();
+    gameStatus.textContent = 'Нажми «Взломать», чтобы начать дуэль!';
+    showToast('Добро пожаловать в Хакерскую Империю!', '🕵️');
+
+    setTimeout(() => {
+        if (!modelReady) {
+            createFallback();
+            showToast('Модель не найдена, используется заглушка', '⚠️');
+        }
+    }, 6000);
+
+    console.log('🚀 Игра запущена');
+</script>
+</body>
+</html>
