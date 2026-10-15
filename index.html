@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#08080c">
+<title>NFT Parser — Premium</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root{
+  /* Surfaces — layered depth */
+  --bg-0:#08080c;
+  --bg-1:#0d0d14;
+  --bg-2:#12121b;
+  --bg-3:#18182a;
+  --bg-4:#1e1e30;
+
+  /* Borders */
+  --bd-0:rgba(255,255,255,.04);
+  --bd-1:rgba(255,255,255,.07);
+  --bd-2:rgba(255,255,255,.12);
+  --bd-3:rgba(255,255,255,.18);
+
+  /* Brand — violet→cyan */
+  --brand:#8b5cf6;
+  --brand-2:#6366f1;
+  --brand-3:#06b6d4;
+  --brand-g:linear-gradient(135deg,#8b5cf6 0%,#6366f1 45%,#06b6d4 100%);
+  --brand-soft:rgba(139,92,246,.12);
+  --brand-soft-2:rgba(139,92,246,.06);
+
+  /* Semantic */
+  --green:#10b981;
+  --green-soft:rgba(16,185,129,.12);
+  --amber:#f59e0b;
+  --amber-soft:rgba(245,158,11,.12);
+  --red:#ef4444;
+  --red-soft:rgba(239,68,68,.12);
+  --pink:#ec4899;
+  --pink-soft:rgba(236,72,153,.12);
+  --blue:#3b82f6;
+  --blue-soft:rgba(59,130,246,.12);
+
+  /* Text */
+  --tx-0:#f5f5f9;
+  --tx-1:#b4b4c8;
+  --tx-2:#7a7a90;
+  --tx-3:#4a4a5c;
+  --tx-4:#2a2a38;
+
+  /* Radii */
+  --r-xs:6px;
+  --r-sm:10px;
+  --r-md:14px;
+  --r-lg:18px;
+  --r-xl:24px;
+  --r-full:999px;
+
+  /* Motion */
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --ease-in-out:cubic-bezier(.4,0,.2,1);
+  --dur-fast:120ms;
+  --dur:200ms;
+  --dur-slow:320ms;
+
+  /* Layout */
+  --nav-h:64px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+
+/* ============================================================
+   RESET
+   ============================================================ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg-0);
+  color:var(--tx-0);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font-family:inherit}
+svg{display:block}
+::-webkit-scrollbar{width:0;height:0}
+
+/* ============================================================
+   APP SHELL
+   ============================================================ */
+.app{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  max-width:480px;
+  margin:0 auto;
+  position:relative;
+  overflow:hidden;
+  background:var(--bg-0);
+}
+/* Ambient gradient background */
+.app::before{
+  content:'';
+  position:absolute;
+  top:-200px;left:-100px;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(139,92,246,.08) 0%,transparent 60%);
+  pointer-events:none;z-index:0;
+  filter:blur(40px);
+}
+.app::after{
+  content:'';
+  position:absolute;
+  bottom:-150px;right:-100px;
+  width:400px;height:400px;
+  background:radial-gradient(circle,rgba(6,182,212,.06) 0%,transparent 60%);
+  pointer-events:none;z-index:0;
+  filter:blur(40px);
+}
+
+/* ============================================================
+   SCROLL AREA
+   ============================================================ */
+.scroll{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:0 18px;
+  padding-top:calc(var(--safe-t) + 8px);
+  padding-bottom:calc(var(--nav-h) + var(--safe-b) + 24px);
+  position:relative;
+  z-index:1;
+  scroll-behavior:smooth;
+}
+
+/* ============================================================
+   PAGE TRANSITIONS
+   ============================================================ */
+.page{display:none}
+.page.on{display:block;animation:pageIn var(--dur) var(--ease-out)}
+@keyframes pageIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.hdr{padding:24px 0 4px}
+.hdr-brand{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;
+}
+.hdr-logo{
+  width:36px;height:36px;
+  border-radius:10px;
+  background:var(--brand-g);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(139,92,246,.25);
+  flex-shrink:0;
+}
+.hdr-logo svg{width:20px;height:20px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.hdr-brand-text{font-size:12px;font-weight:700;letter-spacing:.4px;color:var(--tx-2);text-transform:uppercase}
+.hdr-brand-text b{color:var(--tx-0)}
+.hdr h1{
+  font-size:30px;
+  font-weight:900;
+  letter-spacing:-.7px;
+  line-height:1.1;
+  background:linear-gradient(135deg,#f5f5f9 0%,#a78bfa 60%,#67e8f9 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:6px;
+}
+.hdr p{font-size:14px;color:var(--tx-2);line-height:1.5;max-width:340px}
+
+/* ============================================================
+   SECTION TITLE
+   ============================================================ */
+.stitle{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--tx-3);
+  margin:28px 0 12px 4px;
+}
+.stitle svg{width:13px;height:13px;stroke:var(--tx-3);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* ============================================================
+   HERO STATS
+   ============================================================ */
+.hero{
+  display:grid;
+  grid-template-columns:1.4fr 1fr 1fr;
+  gap:8px;
+  margin:20px 0 4px;
+}
+.hero-card{
+  background:linear-gradient(180deg,var(--bg-2) 0%,var(--bg-1) 100%);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-md);
+  padding:14px 12px;
+  position:relative;
+  overflow:hidden;
+  transition:transform var(--dur-fast) var(--ease-out);
+}
+.hero-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(139,92,246,.5),transparent);
+}
+.hero-card:first-child::before{background:linear-gradient(90deg,transparent,rgba(139,92,246,.8),transparent)}
+.hero-card:active{transform:scale(.97)}
+.hero-num{
+  font-size:22px;font-weight:900;letter-spacing:-.5px;
+  font-variant-numeric:tabular-nums;
+  line-height:1;
+  margin-bottom:4px;
+}
+.hero-card:first-child .hero-num{font-size:28px;background:var(--brand-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-lbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--tx-3)}
+
+/* ============================================================
+   ACTION CARDS
+   ============================================================ */
+.stack{display:flex;flex-direction:column;gap:8px}
+.card{
+  background:linear-gradient(180deg,var(--bg-2) 0%,var(--bg-1) 100%);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-md);
+  padding:14px;
+  display:flex;align-items:center;gap:14px;
+  cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:transform var(--dur-fast) var(--ease-out),
+             background var(--dur) var(--ease-out),
+             border-color var(--dur) var(--ease-out);
+  user-select:none;
+}
+.card::after{
+  content:'';
+  position:absolute;inset:0;
+  background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,.08) 0%,transparent 40%);
+  opacity:0;
+  transition:opacity var(--dur) var(--ease-out);
+  pointer-events:none;
+}
+.card:active{transform:scale(.985);background:var(--bg-3);border-color:var(--bd-2)}
+.card:active::after{opacity:1}
+.card.hot{border-color:rgba(139,92,246,.25);background:linear-gradient(180deg,rgba(139,92,246,.06) 0%,var(--bg-1) 100%)}
+
+.card-ico{
+  width:44px;height:44px;flex-shrink:0;
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.card-ico::before{
+  content:'';position:absolute;inset:0;
+  border-radius:12px;
+  border:1px solid currentColor;
+  opacity:.1;
+}
+.card-ico svg{width:20px;height:20px;stroke-width:1.75;fill:none;stroke-linecap:round;stroke-linejoin:round;position:relative;z-index:1}
+
+/* Icon palettes */
+.i-violet{background:var(--brand-soft);color:#a78bfa}
+.i-violet svg{stroke:#a78bfa}
+.i-cyan{background:rgba(6,182,212,.12);color:#22d3ee}
+.i-cyan svg{stroke:#22d3ee}
+.i-green{background:var(--green-soft);color:#34d399}
+.i-green svg{stroke:#34d399}
+.i-amber{background:var(--amber-soft);color:#fbbf24}
+.i-amber svg{stroke:#fbbf24}
+.i-red{background:var(--red-soft);color:#f87171}
+.i-red svg{stroke:#f87171}
+.i-pink{background:var(--pink-soft);color:#f472b6}
+.i-pink svg{stroke:#f472b6}
+.i-blue{background:var(--blue-soft);color:#60a5fa}
+.i-blue svg{stroke:#60a5fa}
+
+.card-body{flex:1;min-width:0}
+.card-title{
+  font-size:15px;font-weight:700;color:var(--tx-0);
+  letter-spacing:-.2px;
+  display:flex;align-items:center;gap:6px;
+}
+.card-desc{
+  font-size:12.5px;color:var(--tx-2);
+  margin-top:2px;line-height:1.4;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.card-arrow{
+  width:20px;height:20px;flex-shrink:0;
+  opacity:.5;
+  transition:transform var(--dur) var(--ease-out),opacity var(--dur);
+}
+.card:active .card-arrow{transform:translateX(3px);opacity:1}
+.card-arrow svg{width:100%;height:100%;stroke:var(--tx-2);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* Badge */
+.badge{
+  display:inline-flex;align-items:center;
+  font-size:9px;font-weight:800;
+  letter-spacing:.5px;
+  text-transform:uppercase;
+  padding:2px 6px;border-radius:4px;
+  background:var(--brand-g);color:#fff;
+  margin-left:6px;
+}
+.badge.b-new{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.badge.b-beta{background:linear-gradient(135deg,#3b82f6,#8b5cf6)}
+
+/* ============================================================
+   INFO BOX
+   ============================================================ */
+.info{
+  background:var(--bg-1);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-md);
+  padding:16px;
+  margin-top:16px;
+}
+.info-head{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;color:var(--tx-1);
+  margin-bottom:12px;
+}
+.info-head svg{width:15px;height:15px;stroke:var(--tx-2);stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.info-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:5px 0;
+}
+.info-check{
+  width:16px;height:16px;flex-shrink:0;
+  margin-top:2px;
+  border-radius:50%;
+  background:var(--brand-soft);
+  display:flex;align-items:center;justify-content:center;
+}
+.info-check svg{width:10px;height:10px;stroke:#a78bfa;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.info-row span{font-size:12.5px;color:var(--tx-2);line-height:1.5}
+
+/* ============================================================
+   SEARCH + LIST
+   ============================================================ */
+.search{
+  background:var(--bg-1);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-md);
+  padding:0 14px;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:8px;
+  transition:border-color var(--dur);
+}
+.search:focus-within{border-color:rgba(139,92,246,.35);background:var(--bg-2)}
+.search svg{width:18px;height:18px;stroke:var(--tx-3);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;transition:stroke var(--dur)}
+.search:focus-within svg{stroke:#a78bfa}
+.search input{
+  flex:1;background:none;border:none;outline:none;
+  font-size:14.5px;color:var(--tx-0);
+  padding:13px 0;
+  font-weight:500;
+}
+.search input::placeholder{color:var(--tx-3)}
+
+.list{
+  background:var(--bg-1);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-md);
+  max-height:240px;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  position:relative;
+}
+.list::after{
+  content:'';
+  position:sticky;bottom:0;left:0;right:0;
+  height:24px;display:block;
+  background:linear-gradient(transparent,var(--bg-1));
+  pointer-events:none;
+}
+.row{
+  display:flex;align-items:center;
+  padding:12px 14px;
+  cursor:pointer;
+  border-bottom:1px solid var(--bd-0);
+  transition:background var(--dur-fast);
+  position:relative;
+}
+.row:last-child{border-bottom:none}
+.row:active{background:var(--bg-3)}
+.row.sel{background:var(--brand-soft-2)}
+.row.sel .row-check{background:var(--brand-g);border-color:transparent}
+.row.sel .row-check svg{opacity:1;stroke:#fff}
+.row-name{flex:1;font-size:13.5px;font-weight:500;color:var(--tx-0);letter-spacing:-.1px}
+.row-num{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--tx-3);margin-right:10px;font-weight:500}
+.row-check{
+  width:22px;height:22px;flex-shrink:0;
+  border-radius:7px;
+  border:1.5px solid var(--tx-4);
+  display:flex;align-items:center;justify-content:center;
+  transition:all var(--dur) var(--ease-spring);
+}
+.row-check svg{width:14px;height:14px;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity var(--dur)}
+
+.selected-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 2px 0;
+  min-height:24px;
+}
+.selected-name{
+  font-size:13px;color:#a78bfa;font-weight:600;
+  display:flex;align-items:center;gap:6px;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.selected-name.empty{color:var(--tx-3);font-weight:500}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:15px 20px;
+  border-radius:var(--r-md);
+  font-size:15px;font-weight:700;letter-spacing:-.2px;
+  transition:transform var(--dur-fast) var(--ease-out),
+             box-shadow var(--dur),
+             background var(--dur);
+  user-select:none;
+  position:relative;overflow:hidden;
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{
+  background:var(--brand-g);
+  color:#fff;
+  box-shadow:0 8px 24px rgba(139,92,246,.32),
+              inset 0 1px 0 rgba(255,255,255,.15);
+}
+.btn-primary:active{box-shadow:0 4px 12px rgba(139,92,246,.3),inset 0 1px 0 rgba(255,255,255,.15)}
+.btn-primary svg{width:18px;height:18px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.btn-ghost{
+  background:var(--bg-2);color:var(--tx-0);
+  border:1px solid var(--bd-1);
+}
+.btn-ghost svg{width:18px;height:18px;stroke:var(--tx-1);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* Button press ripple */
+.btn::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,.25) 0%,transparent 40%);
+  opacity:0;transition:opacity .4s;
+  pointer-events:none;
+}
+.btn:active::after{opacity:1;transition:opacity 0s}
+
+/* ============================================================
+   SUB PAGES (Slide over)
+   ============================================================ */
+.sub{
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  max-width:480px;margin:0 auto;
+  background:var(--bg-0);
+  z-index:100;
+  transform:translateX(100%);
+  transition:transform var(--dur-slow) var(--ease-out);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:0 18px calc(var(--safe-b) + 24px);
+}
+.sub.open{transform:translateX(0)}
+.sub::-webkit-scrollbar{display:none}
+
+.back{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:calc(var(--safe-t) + 18px) 0 8px;
+  font-size:14px;font-weight:600;color:#a78bfa;
+  cursor:pointer;user-select:none;
+  transition:opacity var(--dur);
+}
+.back:active{opacity:.6}
+.back svg{width:18px;height:18px;stroke:#a78bfa;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* ============================================================
+   COUNTRY PILLS
+   ============================================================ */
+.pills{
+  display:flex;flex-wrap:wrap;gap:6px;
+}
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:8px 14px;
+  border-radius:var(--r-full);
+  background:var(--bg-2);
+  border:1px solid var(--bd-1);
+  color:var(--tx-1);
+  font-size:13px;font-weight:600;
+  transition:all var(--dur) var(--ease-out);
+  user-select:none;
+}
+.pill:active{transform:scale(.95)}
+.pill.on{
+  background:var(--brand-soft);
+  border-color:rgba(139,92,246,.4);
+  color:#c4b5fd;
+}
+
+/* ============================================================
+   COOLDOWN GRID
+   ============================================================ */
+.grid-3{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.cd-card{
+  background:var(--bg-2);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-md);
+  padding:16px 10px;
+  text-align:center;
+  cursor:pointer;
+  transition:all var(--dur) var(--ease-out);
+}
+.cd-card:active{transform:scale(.95);background:var(--bg-3)}
+.cd-ico{
+  width:40px;height:40px;
+  border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 10px;
+}
+.cd-ico svg{width:20px;height:20px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.cd-title{font-size:13px;font-weight:700;color:var(--tx-0)}
+.cd-sub{font-size:10.5px;color:var(--tx-3);margin-top:2px;font-weight:500}
+
+/* ============================================================
+   CONFIRM CARD
+   ============================================================ */
+.confirm{
+  background:var(--bg-1);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-lg);
+  padding:4px 18px;
+  margin-top:16px;
+  position:relative;overflow:hidden;
+}
+.confirm::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(139,92,246,.6),transparent);
+}
+.confirm-row{
+  display:flex;align-items:center;
+  padding:14px 0;
+  border-bottom:1px solid var(--bd-0);
+}
+.confirm-row:last-child{border-bottom:none}
+.confirm-label{
+  font-size:11px;font-weight:700;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--tx-3);
+  width:100px;flex-shrink:0;
+}
+.confirm-val{
+  font-size:14.5px;font-weight:700;color:var(--tx-0);
+  letter-spacing:-.2px;
+  flex:1;text-align:right;
+}
+
+/* ============================================================
+   TOGGLE
+   ============================================================ */
+.toggle{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 0;
+  cursor:pointer;
+  user-select:none;
+}
+.toggle input{display:none}
+.toggle-track{
+  width:40px;height:24px;flex-shrink:0;
+  background:var(--bg-3);
+  border-radius:12px;
+  position:relative;
+  transition:background var(--dur) var(--ease-out);
+  border:1px solid var(--bd-1);
+}
+.toggle-track::after{
+  content:'';
+  position:absolute;
+  top:2px;left:2px;
+  width:18px;height:18px;
+  border-radius:50%;
+  background:var(--tx-2);
+  transition:all var(--dur) var(--ease-spring);
+}
+.toggle input:checked + .toggle-track{
+  background:var(--brand-g);
+  border-color:transparent;
+}
+.toggle input:checked + .toggle-track::after{
+  transform:translateX(16px);
+  background:#fff;
+}
+.toggle-txt{font-size:14px;font-weight:600;color:var(--tx-1)}
+
+/* ============================================================
+   BOTTOM NAV
+   ============================================================ */
+.nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  max-width:480px;margin:0 auto;
+  height:calc(var(--nav-h) + var(--safe-b));
+  padding-bottom:var(--safe-b);
+  display:flex;
+  background:rgba(8,8,12,.85);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-top:1px solid var(--bd-1);
+  z-index:90;
+}
+.nav-item{
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:3px;
+  color:var(--tx-3);
+  font-size:10px;font-weight:600;
+  letter-spacing:.2px;
+  transition:color var(--dur);
+  user-select:none;
+  position:relative;
+  padding-top:6px;
+}
+.nav-item.on{color:#a78bfa}
+.nav-item svg{width:22px;height:22px;stroke-width:1.9;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:transform var(--dur) var(--ease-spring)}
+.nav-item.on svg{transform:scale(1.05)}
+.nav-item.on::before{
+  content:'';
+  position:absolute;top:0;
+  width:20px;height:2px;
+  border-radius:2px;
+  background:var(--brand-g);
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast{
+  position:fixed;
+  bottom:calc(var(--nav-h) + var(--safe-b) + 16px);
+  left:50%;
+  transform:translateX(-50%) translateY(20px) scale(.9);
+  background:var(--bg-4);
+  border:1px solid var(--bd-2);
+  border-radius:var(--r-md);
+  padding:12px 18px;
+  font-size:13.5px;font-weight:600;
+  color:var(--tx-0);
+  box-shadow:0 20px 48px rgba(0,0,0,.6),
+             0 0 0 1px rgba(255,255,255,.03);
+  opacity:0;
+  transition:all var(--dur) var(--ease-spring);
+  z-index:200;
+  pointer-events:none;
+  max-width:min(340px,calc(100vw - 32px));
+  text-align:center;
+  display:flex;align-items:center;gap:8px;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+.toast svg{width:16px;height:16px;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+.profile{
+  background:linear-gradient(180deg,var(--bg-2) 0%,var(--bg-1) 100%);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-lg);
+  padding:20px 18px;
+  display:flex;align-items:center;gap:16px;
+  position:relative;overflow:hidden;
+  margin-bottom:14px;
+}
+.profile::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,rgba(139,92,246,.6),rgba(6,182,212,.6));
+}
+.avatar{
+  width:56px;height:56px;flex-shrink:0;
+  border-radius:50%;
+  background:var(--brand-g);
+  padding:2px;
+  position:relative;
+}
+.avatar-inner{
+  width:100%;height:100%;
+  border-radius:50%;
+  background:var(--bg-2);
+  display:flex;align-items:center;justify-content:center;
+}
+.avatar svg{width:26px;height:26px;stroke:var(--tx-1);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.profile-info{flex:1;min-width:0}
+.profile-name{font-size:18px;font-weight:800;letter-spacing:-.3px;color:var(--tx-0);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-meta{font-size:12px;color:var(--tx-2);margin-top:3px;font-weight:500}
+
+.stats-2{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-bottom:14px;
+}
+.stat{
+  background:var(--bg-1);
+  border:1px solid var(--bd-1);
+  border-radius:var(--r-md);
+  padding:16px;
+  text-align:center;
+}
+.stat-val{font-size:24px;font-weight:900;letter-spacing:-.6px;font-variant-numeric:tabular-nums;line-height:1}
+.stat-val.accent{background:var(--brand-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-lbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--tx-3);margin-top:4px}
+
+/* ============================================================
+   SKELETON
+   ============================================================ */
+.skel{
+  background:linear-gradient(90deg,var(--bg-2) 0%,var(--bg-3) 50%,var(--bg-2) 100%);
+  background-size:200% 100%;
+  animation:shimmer 1.4s linear infinite;
+  border-radius:var(--r-sm);
+}
+@keyframes shimmer{
+  from{background-position:200% 0}
+  to{background-position:-200% 0}
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty{
+  padding:32px 20px;
+  text-align:center;
+  color:var(--tx-3);
+  font-size:13px;
+  font-weight:500;
+}
+.empty svg{width:32px;height:32px;stroke:var(--tx-4);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;margin:0 auto 10px}
+
+/* ============================================================
+   MOUNT ANIMATION
+   ============================================================ */
+.stagger > *{
+  animation:staggerIn var(--dur-slow) var(--ease-out) backwards;
+}
+.stagger > *:nth-child(1){animation-delay:0ms}
+.stagger > *:nth-child(2){animation-delay:40ms}
+.stagger > *:nth-child(3){animation-delay:80ms}
+.stagger > *:nth-child(4){animation-delay:120ms}
+.stagger > *:nth-child(5){animation-delay:160ms}
+.stagger > *:nth-child(6){animation-delay:200ms}
+.stagger > *:nth-child(7){animation-delay:240ms}
+.stagger > *:nth-child(8){animation-delay:280ms}
+.stagger > *:nth-child(9){animation-delay:320ms}
+.stagger > *:nth-child(10){animation-delay:360ms}
+@keyframes staggerIn{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ============ MAIN SCROLL ============ -->
+<div class="scroll" id="scroll">
+
+  <!-- ======== HOME ======== -->
+  <section class="page on" id="pg-home">
+    <div class="hdr">
+      <div class="hdr-brand">
+        <div class="hdr-logo">
+          <svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 .9-4.5 4.4 1 6.2L12 16.5 6.5 19.5l1-6.2L3 8.9 9 8z"/></svg>
+        </div>
+        <div class="hdr-brand-text">NFT <b>Parser</b></div>
+      </div>
+      <h1>Парсинг<br>Telegram-подарков</h1>
+      <p>Находите владельцев, анализируйте коллекции, фильтруйте по стране, полу и маркету.</p>
+    </div>
+
+    <div class="hero">
+      <div class="hero-card"><div class="hero-num" id="hs-c">110</div><div class="hero-lbl">Коллекций</div></div>
+      <div class="hero-card"><div class="hero-num" id="hs-f">0</div><div class="hero-lbl">Найдено</div></div>
+      <div class="hero-card"><div class="hero-num" id="hs-s">0</div><div class="hero-lbl">Обработано</div></div>
+    </div>
+
+    <div class="stitle"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Быстрый старт</div>
+    <div class="stack stagger">
+      <div class="card hot" onclick="go('parser')">
+        <div class="card-ico i-violet"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></div>
+        <div class="card-body">
+          <div class="card-title">Парсинг владельцев</div>
+          <div class="card-desc">Коллекция + фильтр по стране, полу, кулдауну</div>
+        </div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+
+      <div class="card" onclick="openSub('cooldown')">
+        <div class="card-ico i-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="card-body">
+          <div class="card-title">Кулдаун-фильтр</div>
+          <div class="card-desc">Без КД · скоро снятие · сейчас на КД</div>
+        </div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+
+      <div class="card" onclick="openSub('market')">
+        <div class="card-ico i-cyan"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+        <div class="card-body">
+          <div class="card-title">Маркет Telegram</div>
+          <div class="card-desc">Подарки на продаже за звёзды внутри ТГ</div>
+        </div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="info-head">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Как это работает
+      </div>
+      <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Выберите коллекцию подарка</span></div>
+      <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Настройте фильтр — страна, пол, кулдаун</span></div>
+      <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Нажмите «Начать» — результат придёт в чат</span></div>
+    </div>
+  </section>
+
+  <!-- ======== PARSER ======== -->
+  <section class="page" id="pg-parser">
+    <div class="hdr">
+      <h1>Парсинг</h1>
+      <p>Выберите коллекцию и фильтр. Результат придёт в чат.</p>
+    </div>
+
+    <div style="margin-top:18px">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="gift-search" placeholder="Поиск подарка…" autocomplete="off">
+      </div>
+      <div class="list" id="gift-list"></div>
+      <div class="selected-bar">
+        <div class="selected-name empty" id="sel-label">Подарок не выбран</div>
+      </div>
+    </div>
+
+    <div class="stitle"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Тип владельца</div>
+    <div class="stack">
+      <div class="card" onclick="openSub('country')">
+        <div class="card-ico i-violet"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="card-body"><div class="card-title">🌍 По стране</div><div class="card-desc">Китай, Россия, Узбекистан, Казахстан и др.</div></div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+
+      <div class="card" onclick="confirmAction('girls')">
+        <div class="card-ico i-pink"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M12 13v8M9 18h6"/></svg></div>
+        <div class="card-body"><div class="card-title">AI-поиск девушек <span class="badge b-beta">AI</span></div><div class="card-desc">Нейросеть проверит имена и найдёт женские аккаунты</div></div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+
+      <div class="card" onclick="confirmAction('random')">
+        <div class="card-ico i-cyan"><svg viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></div>
+        <div class="card-body"><div class="card-title">Случайные владельцы</div><div class="card-desc">Случайная выборка из коллекции</div></div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+
+      <div class="card" onclick="confirmAction('original')">
+        <div class="card-ico i-green"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="card-body"><div class="card-title">Никогда не передавались</div><div class="card-desc">Подарки всегда у одного владельца</div></div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="stitle"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="20" y1="21" x2="20" y2="16"/></svg>Комбо-поиск</div>
+    <div class="card" onclick="openSub('combo')">
+      <div class="card-ico i-pink"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="20" y1="21" x2="20" y2="16"/></svg></div>
+      <div class="card-body"><div class="card-title">Несколько коллекций сразу</div><div class="card-desc">До 6 коллекций + несколько фильтров одновременно</div></div>
+      <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+
+    <div class="stitle"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Fragment (TON)</div>
+    <div class="stack">
+      <div class="card" onclick="sendAction('numbers')">
+        <div class="card-ico i-amber"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+        <div class="card-body"><div class="card-title">+888 номера</div><div class="card-desc">Виртуальные номера Fragment — кошельки</div></div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+
+      <div class="card" onclick="sendAction('nft_usernames')">
+        <div class="card-ico i-blue"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="card-body"><div class="card-title">NFT юзернеймы</div><div class="card-desc">Автопоиск из TON блокчейна — кошельки и владельцы</div></div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="stitle"><svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/></svg>Неулучшенные подарки</div>
+    <div class="stack" id="non-upgraded-section"></div>
+
+    <div class="stitle"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Управление</div>
+    <div class="card" onclick="sendAction('reset_viewed')">
+      <div class="card-ico i-red"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
+      <div class="card-body"><div class="card-title">Сбросить просмотренных</div><div class="card-desc">Очистить историю — следующий парсинг покажет всех заново</div></div>
+      <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+  </section>
+
+  <!-- ======== PROFILE ======== -->
+  <section class="page" id="pg-profile">
+    <div class="hdr">
+      <h1>Профиль</h1>
+      <p>Ваш аккаунт и статистика парсинга</p>
+    </div>
+
+    <div style="margin-top:18px">
+      <div class="profile">
+        <div class="avatar">
+          <div class="avatar-inner">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name" id="p-name">Пользователь</div>
+          <div class="profile-meta" id="p-meta">Telegram</div>
+        </div>
+      </div>
+
+      <div class="stats-2">
+        <div class="stat"><div class="stat-val accent" id="p-found">0</div><div class="stat-lbl">Найдено</div></div>
+        <div class="stat"><div class="stat-val" id="p-scanned">0</div><div class="stat-lbl">Обработано</div></div>
+      </div>
+
+      <div class="stitle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Управление</div>
+
+      <div class="card" onclick="sendAction('reset_viewed')">
+        <div class="card-ico i-red"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
+        <div class="card-body"><div class="card-title">Сбросить просмотренных</div><div class="card-desc">Удалить всю историю парсинга</div></div>
+        <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ SUB: COMBO ============ -->
+<div class="sub" id="sub-combo">
+  <div class="back" onclick="closeSub()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Назад</div>
+  <div class="hdr" style="padding-top:4px"><h1>Комбо-поиск</h1><p>До 6 коллекций + несколько фильтров (логика «И»)</p></div>
+
+  <div style="margin-top:18px">
+    <div class="stitle" style="margin-top:0"><svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/></svg>Коллекции (до 6)</div>
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="combo-gift-search" placeholder="Поиск подарка…" autocomplete="off">
+    </div>
+    <div class="list" id="combo-gift-list"></div>
+    <div class="selected-bar"><div class="selected-name empty" id="combo-sel-label">Ничего не выбрано</div></div>
+  </div>
+
+  <div style="margin-top:14px">
+    <div class="stitle" style="margin-top:0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>Фильтры</div>
+    <label class="toggle"><input type="checkbox" id="combo-girls"><span class="toggle-track"></span><span class="toggle-txt">👩 Только девушки (AI)</span></label>
+    <label class="toggle"><input type="checkbox" id="combo-orig"><span class="toggle-track"></span><span class="toggle-txt">🆕 Никогда не передавались</span></label>
+    <label class="toggle"><input type="checkbox" id="combo-market"><span class="toggle-track"></span><span class="toggle-txt">🛒 Только на маркете (⭐)</span></label>
+  </div>
+
+  <div style="margin-top:8px">
+    <div class="stitle" style="margin-top:14px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg>Страна владельца</div>
+    <div class="pills">
+      <button class="pill combo-cf on" data-country="all" onclick="setComboCountry(this)">🌍 Любая</button>
+      <button class="pill combo-cf" data-country="cn" onclick="setComboCountry(this)">🇨🇳 Китай</button>
+      <button class="pill combo-cf" data-country="ru" onclick="setComboCountry(this)">🇷🇺 Россия</button>
+      <button class="pill combo-cf" data-country="uz" onclick="setComboCountry(this)">🇺🇿 Узбекистан</button>
+      <button class="pill combo-cf" data-country="kz" onclick="setComboCountry(this)">🇰🇿 Казахстан</button>
+      <button class="pill combo-cf" data-country="kg" onclick="setComboCountry(this)">🇰🇬 Киргизия</button>
+      <button class="pill combo-cf" data-country="tj" onclick="setComboCountry(this)">🇹🇯 Таджикистан</button>
+      <button class="pill combo-cf" data-country="in" onclick="setComboCountry(this)">🇮🇳 Индия</button>
+      <button class="pill combo-cf" data-country="ar" onclick="setComboCountry(this)">🇸🇦 Арабы</button>
+      <button class="pill combo-cf" data-country="id" onclick="setComboCountry(this)">🇮🇩 Индонезия</button>
+      <button class="pill combo-cf" data-country="jp" onclick="setComboCountry(this)">🇯🇵 Япония</button>
+      <button class="pill combo-cf" data-country="kr" onclick="setComboCountry(this)">🇰🇷 Корея</button>
+      <button class="pill combo-cf" data-country="tr" onclick="setComboCountry(this)">🇹🇷 Турция</button>
+    </div>
+  </div>
+
+  <div style="margin-top:20px">
+    <button class="btn btn-primary" onclick="runCombo()">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Искать
+    </button>
+  </div>
+</div>
+
+<!-- ============ SUB: COUNTRY ============ -->
+<div class="sub" id="sub-country">
+  <div class="back" onclick="closeSub()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Назад</div>
+  <div class="hdr" style="padding-top:4px"><h1>По стране</h1><p>Выберите страну владельца</p></div>
+  <div class="stack" style="margin-top:18px" id="country-cards"></div>
+</div>
+
+<!-- ============ SUB: MARKET COUNTRY ============ -->
+<div class="sub" id="sub-market-country">
+  <div class="back" onclick="closeSub()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Назад</div>
+  <div class="hdr" style="padding-top:4px"><h1>Маркет · по стране</h1><p>Подарки от выбранной страны за ⭐</p></div>
+  <div class="stack" style="margin-top:18px" id="market-country-cards"></div>
+</div>
+
+<!-- ============ SUB: CONFIRM ============ -->
+<div class="sub" id="sub-confirm">
+  <div class="back" onclick="closeSub()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Назад</div>
+  <div class="hdr" style="padding-top:4px">
+    <h1 id="confirm-title">Подтверждение</h1>
+    <p id="confirm-desc">Проверьте настройки</p>
+  </div>
+
+  <div class="confirm">
+    <div class="confirm-row">
+      <div class="confirm-label">Коллекция</div>
+      <div class="confirm-val" id="confirm-gift">—</div>
+    </div>
+    <div class="confirm-row">
+      <div class="confirm-label">Фильтр</div>
+      <div class="confirm-val" id="confirm-filter">—</div>
+    </div>
+  </div>
+
+  <div id="confirm-country-wrap" style="display:none;margin-top:14px">
+    <div class="stitle" style="margin-top:0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/></svg>Национальность</div>
+    <div class="pills">
+      <button class="pill on" data-country="all" onclick="setCountry(this)">🌍 Все</button>
+      <button class="pill" data-country="cn" onclick="setCountry(this)">🇨🇳 Китай</button>
+      <button class="pill" data-country="ru" onclick="setCountry(this)">🇷🇺 Россия</button>
+      <button class="pill" data-country="uz" onclick="setCountry(this)">🇺🇿 Узбекистан</button>
+      <button class="pill" data-country="kz" onclick="setCountry(this)">🇰🇿 Казахстан</button>
+      <button class="pill" data-country="kg" onclick="setCountry(this)">🇰🇬 Киргизия</button>
+      <button class="pill" data-country="tj" onclick="setCountry(this)">🇹🇯 Таджикистан</button>
+      <button class="pill" data-country="in" onclick="setCountry(this)">🇮🇳 Индия</button>
+      <button class="pill" data-country="ar" onclick="setCountry(this)">🇸🇦 Арабы</button>
+      <button class="pill" data-country="id" onclick="setCountry(this)">🇮🇩 Индонезия</button>
+      <button class="pill" data-country="jp" onclick="setCountry(this)">🇯🇵 Япония</button>
+      <button class="pill" data-country="kr" onclick="setCountry(this)">🇰🇷 Корея</button>
+      <button class="pill" data-country="tr" onclick="setCountry(this)">🇹🇷 Турция</button>
+    </div>
+  </div>
+
+  <div id="confirm-orig-wrap" style="display:none;margin-top:12px">
+    <label class="toggle"><input type="checkbox" id="confirm-orig-cb"><span class="toggle-track"></span><span class="toggle-txt">🆕 Только никогда не передавались</span></label>
+  </div>
+
+  <div id="confirm-anygift-wrap" style="display:none;margin-top:12px">
+    <label class="toggle"><input type="checkbox" id="confirm-anygift-cb" onchange="onAnyGiftToggle()"><span class="toggle-track"></span><span class="toggle-txt">🎲 Искать по всем коллекциям</span></label>
+  </div>
+
+  <div style="margin-top:24px">
+    <button class="btn btn-primary" onclick="doConfirmedAction()">
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Начать парсинг
+    </button>
+  </div>
+
+  <div class="info" style="margin-top:16px">
+    <div class="info-head">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      Что произойдёт
+    </div>
+    <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Мини-апп закроется</span></div>
+    <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Бот начнёт парсинг через API</span></div>
+    <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Результаты придут прямо в чат</span></div>
+  </div>
+</div>
+
+<!-- ============ SUB: COOLDOWN ============ -->
+<div class="sub" id="sub-cooldown">
+  <div class="back" onclick="closeSub()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Назад</div>
+  <div class="hdr" style="padding-top:4px"><h1>Кулдаун</h1><p>Подарки по статусу кулдауна</p></div>
+
+  <div style="margin-top:18px">
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" class="sub-gift-search" placeholder="Поиск подарка…" autocomplete="off">
+    </div>
+    <div class="list sub-gift-list"></div>
+    <div class="selected-bar"><div class="selected-name empty sub-sel-label">Подарок не выбран</div></div>
+  </div>
+
+  <div class="stitle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Фильтр</div>
+
+  <div class="grid-3">
+    <div class="cd-card" onclick="confirmAction('cd_free')">
+      <div class="cd-ico i-green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="cd-title">Без КД</div>
+      <div class="cd-sub">Готов к передаче</div>
+    </div>
+    <div class="cd-card" onclick="confirmAction('cd_soon')">
+      <div class="cd-ico i-amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="cd-title">Скоро</div>
+      <div class="cd-sub">1-2 дня</div>
+    </div>
+    <div class="cd-card" onclick="confirmAction('cd_active')">
+      <div class="cd-ico i-red"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+      <div class="cd-title">На КД</div>
+      <div class="cd-sub">Ждём снятия</div>
+    </div>
+  </div>
+
+  <div class="info">
+    <div class="info-head">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      Что такое кулдаун
+    </div>
+    <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>После улучшения — нельзя передать 7 дней</span></div>
+    <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>«Без КД» — можно передавать прямо сейчас</span></div>
+    <div class="info-row"><div class="info-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>«Скоро» — осталось 1-2 дня</span></div>
+  </div>
+</div>
+
+<!-- ============ SUB: MARKET ============ -->
+<div class="sub" id="sub-market">
+  <div class="back" onclick="closeSub()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>Назад</div>
+  <div class="hdr" style="padding-top:4px"><h1>Маркет Telegram</h1><p>Подарки на продаже за ⭐ звёзды</p></div>
+
+  <div style="margin-top:18px">
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" class="sub-gift-search" placeholder="Поиск подарка…" autocomplete="off">
+    </div>
+    <div class="list sub-gift-list"></div>
+    <div class="selected-bar"><div class="selected-name empty sub-sel-label">Подарок не выбран</div></div>
+  </div>
+
+  <div class="stitle"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Фильтр маркета</div>
+
+  <div class="stack">
+    <div class="card" onclick="openSub('market-country')">
+      <div class="card-ico i-violet"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10"/></svg></div>
+      <div class="card-body"><div class="card-title">🌍 По стране</div><div class="card-desc">Подарки от выбранной страны</div></div>
+      <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+    <div class="card" onclick="confirmAction('market_all')">
+      <div class="card-ico i-cyan"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+      <div class="card-body"><div class="card-title">Все лоты на маркете</div><div class="card-desc">Все подарки на продаже внутри Telegram</div></div>
+      <div class="card-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="nav-item on" data-tab="home" onclick="go('home')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Главная</span>
+  </div>
+  <div class="nav-item" data-tab="parser" onclick="go('parser')">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+    <span>Парсинг</span>
+  </div>
+  <div class="nav-item" data-tab="profile" onclick="go('profile')">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span>Профиль</span>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ============================================================
+   TELEGRAM
+   ============================================================ */
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready(); tg.expand();
+  tg.setHeaderColor('#08080c');
+  tg.setBackgroundColor('#08080c');
+  const u = tg.initDataUnsafe?.user;
+  if (u) {
+    document.getElementById('p-name').textContent = [u.first_name, u.last_name].filter(Boolean).join(' ');
+    document.getElementById('p-meta').textContent = u.username ? `@${u.username} · ID ${u.id}` : `ID ${u.id}`;
+  }
+}
+const haptic = (type = 'light') => {
+  try { tg?.HapticFeedback?.impactOccurred(type); } catch {}
+};
+const hapticSel = () => { try { tg?.HapticFeedback?.selectionChanged(); } catch {} };
+const hapticWarn = () => { try { tg?.HapticFeedback?.notificationOccurred('warning'); } catch {} };
+const hapticOk = () => { try { tg?.HapticFeedback?.notificationOccurred('success'); } catch {} };
+
+/* ============================================================
+   DATA
+   ============================================================ */
+const GIFTS = ["Artisan Brick","Astral Shard","B-Day Candle","Berry Box","Big Year","Bling Binky","Bonded Ring","Bow Tie","Bunny Muffin","Candy Cane","Clover Pin","Cookie Heart","Crystal Ball","Cupid Charm","Desk Calendar","Diamond Ring","Durov's Cap","Easter Egg","Electric Skull","Eternal Candle","Eternal Rose","Evil Eye","Faith Amulet","Flying Broom","Fresh Socks","Gem Signet","Genie Lamp","Ginger Cookie","Hanging Star","Happy Brownie","Heart Locket","Heroic Helmet","Hex Pot","Holiday Drink","Homemade Cake","Hypno Lollipop","Ice Cream","Input Key","Instant Ramen","Ion Gem","Ionic Dryer","Jack in the Box","Jelly Bunny","Jester Hat","Jingle Bells","Jolly Chimp","Joyful Bundle","Khabib's Papakha","Kissed Frog","Light Sword","Lol Pop","Loot Bag","Love Candle","Love Potion","Low Rider","Lunar Snake","Lush Bouquet","Mad Pumpkin","Magic Potion","Mighty Arm","Mini Oscar","Money Pot","Moon Pendant","Mousse Cake","Nail Bracelet","Neko Helmet","Party Sparkler","Perfume Bottle","Pet Snake","Plush Pepe","Precious Peach","Pretty Posy","Record Player","Restless Jar","Sakura Flower","Santa Hat","Scared Cat","Sharp Tongue","Signet Ring","Skull Flower","Sky Stilettos","Sleigh Bell","Snake Box","Snoop Cigar","Snoop Dogg","Snow Globe","Snow Mittens","Spiced Wine","Spring Basket","Spy Agaric","Star Notepad","Stellar Rocket","Swag Bag","Swiss Watch","Tama Gadget","Top Hat","Toy Bear","Trapped Heart","Valentine Box","Vintage Cigar","Voodoo Doll","Westside Sign","Whip Cupcake","Winter Wreath","Witch Hat","Xmas Stocking"];
+
+const COUNTRIES = [
+  {code:'cn',flag:'🇨🇳',name:'Китай',desc:'Иероглифы в имени'},
+  {code:'ru',flag:'🇷🇺',name:'Россия',desc:'Кириллица в имени'},
+  {code:'uz',flag:'🇺🇿',name:'Узбекистан',desc:'Узбекские имена'},
+  {code:'kz',flag:'🇰🇿',name:'Казахстан',desc:'Казахские имена'},
+  {code:'kg',flag:'🇰🇬',name:'Киргизия',desc:'Киргизские имена'},
+  {code:'tj',flag:'🇹🇯',name:'Таджикистан',desc:'Таджикские имена'},
+  {code:'in',flag:'🇮🇳',name:'Индия',desc:'Индийские скрипты'},
+  {code:'ar',flag:'🇸🇦',name:'Арабы',desc:'Арабское письмо'},
+  {code:'id',flag:'🇮🇩',name:'Индонезия',desc:'Индонезийские имена'},
+  {code:'jp',flag:'🇯🇵',name:'Япония',desc:'Хирагана / катакана'},
+  {code:'kr',flag:'🇰🇷',name:'Корея',desc:'Хангыль'},
+  {code:'tr',flag:'🇹🇷',name:'Турция',desc:'Турецкие имена'},
+];
+
+const ACTION_LABELS = {
+  girls:'AI-поиск девушек', random:'Случайный поиск', original:'Оригинальные',
+  market_all:'Маркет · все лоты', cd_free:'Без кулдауна', cd_soon:'Скоро снятие', cd_active:'На кулдауне',
+};
+const ACTION_DESCS = {
+  girls:'AI проверит имена и определит женские аккаунты',
+  random:'Бот выдаст случайных владельцев из коллекции',
+  original:'Подарки, которые никогда не передавались',
+  market_all:'Все лоты на продаже внутри Telegram',
+  cd_free:'Подарки, готовые к передаче',
+  cd_soon:'Кулдаун снимется через 1-2 дня',
+  cd_active:'Подарки сейчас на кулдауне',
+};
+COUNTRIES.forEach(c => {
+  ACTION_LABELS['country_'+c.code] = c.flag + ' ' + c.name;
+  ACTION_DESCS['country_'+c.code] = 'Поиск владельцев — ' + c.desc;
+  ACTION_LABELS['market_'+c.code] = c.flag + ' Маркет: ' + c.name;
+  ACTION_DESCS['market_'+c.code] = 'Подарки от ' + c.name + ' за ⭐';
+});
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let selectedGift = null;
+let pendingAction = null;
+let selectedCountry = 'all';
+let comboGifts = [];
+let comboCountry = 'all';
+const COMBO_MAX = 6;
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function rowHTML(name, idx, selected, onclick) {
+  return `<div class="row${selected?' sel':''}" onclick="${onclick}">
+    <div class="row-name">${name}</div>
+    <div class="row-num">#${idx}</div>
+    <div class="row-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+  </div>`;
+}
+
+function renderGifts(filter='') {
+  const el = document.getElementById('gift-list');
+  const f = filter.toLowerCase();
+  const items = GIFTS.map((g,i)=>({name:g,i})).filter(x => !f || x.name.toLowerCase().includes(f));
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>Ничего не найдено</div>`;
+    return;
+  }
+  el.innerHTML = items.map(x => rowHTML(x.name, x.i+1, selectedGift===x.name, `pickGift('${x.name.replace(/'/g,"\\'")}')`)).join('');
+}
+
+function renderSubGifts(listEl, filter='') {
+  const f = filter.toLowerCase();
+  const items = GIFTS.map((g,i)=>({name:g,i})).filter(x => !f || x.name.toLowerCase().includes(f));
+  if (!items.length) {
+    listEl.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>Ничего не найдено</div>`;
+    return;
+  }
+  listEl.innerHTML = items.map(x => rowHTML(x.name, x.i+1, selectedGift===x.name,
+    `pickGiftSub('${x.name.replace(/'/g,"\\'")}',this.closest('.list'),this.closest('.sub'))`)).join('');
+}
+
+function pickGift(name) {
+  selectedGift = selectedGift === name ? null : name;
+  updateSelLabels();
+  renderGifts(document.getElementById('gift-search').value);
+  haptic('light');
+}
+
+function pickGiftSub(name, listEl, subEl) {
+  selectedGift = selectedGift === name ? null : name;
+  updateSelLabels();
+  const searchEl = subEl?.querySelector('.sub-gift-search');
+  if (listEl) renderSubGifts(listEl, searchEl?.value || '');
+  renderGifts(document.getElementById('gift-search').value);
+  haptic('light');
+}
+
+function updateSelLabels() {
+  const main = document.getElementById('sel-label');
+  if (selectedGift) { main.textContent = '✓ ' + selectedGift; main.classList.remove('empty'); }
+  else { main.textContent = 'Подарок не выбран'; main.classList.add('empty'); }
+
+  document.querySelectorAll('.sub-sel-label').forEach(el => {
+    if (selectedGift) { el.textContent = '✓ ' + selectedGift; el.classList.remove('empty'); }
+    else { el.textContent = 'Подарок не выбран'; el.classList.add('empty'); }
+  });
+}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+function go(name) {
+  closeSub();
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('on', n.dataset.tab === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('on', p.id === 'pg-'+name));
+  document.getElementById('scroll').scrollTop = 0;
+  haptic('light');
+}
+
+function openSub(name) {
+  const el = document.getElementById('sub-' + name);
+  if (!el) return;
+  el.classList.add('open');
+  el.scrollTop = 0;
+  const list = el.querySelector('.sub-gift-list');
+  const search = el.querySelector('.sub-gift-search');
+  if (list) renderSubGifts(list, search?.value || '');
+  if (name === 'combo') renderComboGifts(document.getElementById('combo-gift-search')?.value || '');
+  haptic('light');
+}
+function closeSub() {
+  document.querySelectorAll('.sub').forEach(s => s.classList.remove('open'));
+  haptic('light');
+}
+
+/* ============================================================
+   DEEP LINKS
+   ============================================================ */
+function getBotUsername() {
+  return new URLSearchParams(location.search).get('bot') || 'MamanMom67_bot';
+}
+function toApiName(n) { return n.replace(/[\s\-\u2019']/g, ''); }
+function deepLink(param) {
+  if (!tg) return;
+  const url = 'https://t.me/' + getBotUsername() + '?start=' + param;
+  try { tg.openTelegramLink(url); } catch { window.open(url, '_blank'); }
+  tg.close();
+}
+
+/* ============================================================
+   COUNTRY SELECT (confirm)
+   ============================================================ */
+function setCountry(btn) {
+  btn.closest('.pills').querySelectorAll('.pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  selectedCountry = btn.dataset.country;
+  hapticSel();
+}
+
+/* ============================================================
+   RENDER COUNTRY PICKERS
+   ============================================================ */
+(function renderCountryPickers() {
+  const globe = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+  const arr = '<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+
+  document.getElementById('country-cards').innerHTML = COUNTRIES.map(c => `
+    <div class="card" onclick="confirmAction('country_${c.code}')">
+      <div class="card-ico i-violet">${globe}</div>
+      <div class="card-body"><div class="card-title">${c.flag} ${c.name}</div><div class="card-desc">${c.desc}</div></div>
+      <div class="card-arrow">${arr}</div>
+    </div>`).join('');
+
+  document.getElementById('market-country-cards').innerHTML = COUNTRIES.map(c => `
+    <div class="card" onclick="confirmAction('market_${c.code}')">
+      <div class="card-ico i-cyan">${globe}</div>
+      <div class="card-body"><div class="card-title">${c.flag} ${c.name}</div><div class="card-desc">Подарки от ${c.name} за ⭐</div></div>
+      <div class="card-arrow">${arr}</div>
+    </div>`).join('');
+})();
+
+/* ============================================================
+   CONFIRM FLOW
+   ============================================================ */
+const COUNTRY_ACTIONS = new Set(['girls','cd_free','cd_soon','cd_active','random']);
+const ORIG_ACTIONS = new Set(['random']);
+const ANYGIFT_ACTIONS = new Set(['country']);
+
+function _resetConfirm() {
+  selectedCountry = 'all';
+  document.querySelectorAll('#confirm-country-wrap .pill').forEach(b => b.classList.toggle('on', b.dataset.country==='all'));
+  const a = document.getElementById('confirm-orig-cb'); if (a) a.checked = false;
+  const b = document.getElementById('confirm-anygift-cb'); if (b) b.checked = false;
+}
+
+function onAnyGiftToggle() {
+  const cb = document.getElementById('confirm-anygift-cb');
+  const g = document.getElementById('confirm-gift');
+  if (cb && g) g.textContent = cb.checked ? '🎲 Все коллекции' : (selectedGift || '—');
+}
+
+function confirmAction(action) {
+  if (action === 'random') {
+    pendingAction = action;
+    document.getElementById('confirm-title').textContent = ACTION_LABELS[action] || action;
+    document.getElementById('confirm-desc').textContent = ACTION_DESCS[action] || '';
+    document.getElementById('confirm-gift').textContent = 'Все коллекции';
+    document.getElementById('confirm-filter').textContent = ACTION_LABELS[action] || action;
+  } else {
+    const base = action.replace(/_[a-z]{2}$/, '').replace(/_/g, '');
+    const anyOK = ANYGIFT_ACTIONS.has(base);
+    if (!selectedGift && !anyOK) {
+      showToast('Сначала выбери коллекцию', 'warn');
+      return;
+    }
+    pendingAction = action;
+    document.getElementById('confirm-title').textContent = ACTION_LABELS[action] || action;
+    document.getElementById('confirm-desc').textContent = ACTION_DESCS[action] || '';
+    document.getElementById('confirm-gift').textContent = selectedGift || '🎲 Все коллекции';
+    document.getElementById('confirm-filter').textContent = ACTION_LABELS[action] || action;
+  }
+
+  _resetConfirm();
+  const base = action.replace(/_[a-z]{2}$/, '').replace(/_/g, '');
+  document.getElementById('confirm-country-wrap').style.display = COUNTRY_ACTIONS.has(action) ? '' : 'none';
+  document.getElementById('confirm-orig-wrap').style.display = ORIG_ACTIONS.has(action) ? '' : 'none';
+  document.getElementById('confirm-anygift-wrap').style.display = ANYGIFT_ACTIONS.has(base) ? '' : 'none';
+
+  const cb = document.getElementById('confirm-anygift-cb');
+  if (cb && ANYGIFT_ACTIONS.has(base) && !selectedGift) { cb.checked = true; onAnyGiftToggle(); }
+
+  document.querySelectorAll('.sub').forEach(s => { if (s.id !== 'sub-confirm') s.classList.remove('open'); });
+  openSub('confirm');
+  haptic('medium');
+}
+
+function doConfirmedAction() {
+  if (!pendingAction) return;
+  haptic('medium');
+
+  const anyCb = document.getElementById('confirm-anygift-cb');
+  const base = pendingAction.replace(/_[a-z]{2}$/, '').replace(/_/g, '');
+  if (anyCb && anyCb.checked && ANYGIFT_ACTIONS.has(base)) {
+    const m = pendingAction.match(/_([a-z]{2})$/);
+    const cc = (m && m[1] !== 'al') ? m[1] : '';
+    deepLink('random' + cc);
+    return;
+  }
+
+  let suffix = '';
+  if (COUNTRY_ACTIONS.has(pendingAction) && selectedCountry !== 'all') suffix += selectedCountry;
+  const origCb = document.getElementById('confirm-orig-cb');
+  if (ORIG_ACTIONS.has(pendingAction) && origCb && origCb.checked) suffix += 'orig';
+
+  const safe = pendingAction.replace(/_/g, '') + suffix;
+
+  if (pendingAction === 'random') { deepLink(safe); return; }
+  if (!selectedGift) return;
+  deepLink(safe + '__' + toApiName(selectedGift));
+}
+
+/* ============================================================
+   DIRECT
+   ============================================================ */
+function sendAction(action) {
+  haptic('medium');
+  if (action === 'reset_viewed' || action === 'numbers' || action === 'nft_usernames') {
+    deepLink(action);
+    return;
+  }
+  if (!selectedGift) return;
+  deepLink(action.replace(/_/g, '') + '__' + toApiName(selectedGift));
+}
+
+/* ============================================================
+   NON-UPGRADED
+   ============================================================ */
+(function renderNonUpgraded() {
+  const popular = ['Plush Pepe','Durov\u2019s Cap','Jelly Bunny','Perfume Bottle','Vintage Cigar','Sakura Flower','Electric Skull','Diamond Ring','Signet Ring','Love Potion','Astral Shard','Hypno Lollipop','Mad Pumpkin','Crystal Ball','Genie Lamp','Trapped Heart'];
+  const sec = document.getElementById('non-upgraded-section');
+  if (!sec) return;
+  const ico = '<svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>';
+  const arr = '<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+  sec.innerHTML = popular.map(g => `
+    <div class="card" onclick="sendNonUpgraded('${g.replace(/'/g,"\\'")}')">
+      <div class="card-ico i-green">${ico}</div>
+      <div class="card-body"><div class="card-title">${g}</div><div class="card-desc">Неулучшенные владельцы</div></div>
+      <div class="card-arrow">${arr}</div>
+    </div>`).join('');
+})();
+
+function sendNonUpgraded(gift) {
+  haptic('medium');
+  deepLink('nonupgraded__' + toApiName(gift));
+}
+
+/* ============================================================
+   COMBO
+   ============================================================ */
+function renderComboGifts(filter='') {
+  const el = document.getElementById('combo-gift-list');
+  if (!el) return;
+  const f = filter.toLowerCase();
+  const items = GIFTS.map((g,i)=>({name:g,i})).filter(x => !f || x.name.toLowerCase().includes(f));
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>Ничего не найдено</div>`;
+  } else {
+    el.innerHTML = items.map(x => rowHTML(x.name, x.i+1, comboGifts.includes(x.name), `toggleComboGift('${x.name.replace(/'/g,"\\'")}')`)).join('');
+  }
+  updateComboLabel();
+}
+
+function updateComboLabel() {
+  const el = document.getElementById('combo-sel-label');
+  if (!el) return;
+  if (comboGifts.length) {
+    el.textContent = `Выбрано ${comboGifts.length}/${COMBO_MAX} · ${comboGifts.slice(0,3).join(', ')}${comboGifts.length>3?'…':''}`;
+    el.classList.remove('empty');
+  } else {
+    el.textContent = 'Ничего не выбрано';
+    el.classList.add('empty');
+  }
+}
+
+function toggleComboGift(name) {
+  const i = comboGifts.indexOf(name);
+  if (i >= 0) comboGifts.splice(i, 1);
+  else {
+    if (comboGifts.length >= COMBO_MAX) { showToast('Максимум ' + COMBO_MAX + ' коллекций', 'warn'); return; }
+    comboGifts.push(name);
+  }
+  renderComboGifts(document.getElementById('combo-gift-search').value);
+  haptic('light');
+}
+
+function setComboCountry(btn) {
+  btn.closest('.pills').querySelectorAll('.pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  comboCountry = btn.dataset.country;
+  hapticSel();
+}
+
+function runCombo() {
+  if (!comboGifts.length) { showToast('Выбери хотя бы одну коллекцию', 'warn'); return; }
+  let flags = '';
+  if (document.getElementById('combo-girls').checked) flags += 'g';
+  if (document.getElementById('combo-orig').checked) flags += 'o';
+  if (document.getElementById('combo-market').checked) flags += 'm';
+  if (!flags) flags = '0';
+  const cc = comboCountry === 'all' ? 'xx' : comboCountry;
+  const param = 'combo__' + cc + '_' + flags + '__' + comboGifts.map(toApiName).join('-');
+  if (param.length > 64) { showToast('Слишком много коллекций', 'warn'); return; }
+  haptic('medium');
+  deepLink(param);
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+let toastTimer;
+function showToast(text, type = 'info') {
+  const el = document.getElementById('toast');
+  const icons = {
+    info: '<svg viewBox="0 0 24 24" stroke="#a78bfa"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+    warn: '<svg viewBox="0 0 24 24" stroke="#fbbf24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    ok: '<svg viewBox="0 0 24 24" stroke="#34d399"><polyline points="20 6 9 17 4 12"/></svg>',
+  };
+  el.innerHTML = (icons[type] || '') + '<span>' + text + '</span>';
+  el.classList.add('show');
+  if (type === 'warn') hapticWarn(); else hapticOk();
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+/* ============================================================
+   RIPPLE on cards & buttons
+   ============================================================ */
+document.addEventListener('pointerdown', e => {
+  const el = e.target.closest('.card, .btn');
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty('--rx', ((e.clientX - r.left) / r.width * 100) + '%');
+  el.style.setProperty('--ry', ((e.clientY - r.top) / r.height * 100) + '%');
+}, { passive: true });
+
+/* ============================================================
+   EVENT BINDINGS
+   ============================================================ */
+document.getElementById('gift-search').addEventListener('input', e => renderGifts(e.target.value));
+document.querySelectorAll('.sub-gift-search').forEach(inp => {
+  inp.addEventListener('input', e => {
+    const list = e.target.closest('.sub')?.querySelector('.sub-gift-list');
+    if (list) renderSubGifts(list, e.target.value);
+  });
+});
+const comboSearch = document.getElementById('combo-gift-search');
+if (comboSearch) comboSearch.addEventListener('input', e => renderComboGifts(e.target.value));
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderGifts();
+document.querySelectorAll('.sub-gift-list').forEach(el => renderSubGifts(el, ''));
+renderComboGifts('');
+updateSelLabels();
+</script>
+</body>
+</html>
