@@ -3,496 +3,726 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>NFT Parser Pro</title>
+<title>Star</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden}
 body{
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-  background:#06060c;color:#e4e5f0;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  background:#0a0a0a;color:#ededed;
   -webkit-font-smoothing:antialiased;
+  font-feature-settings:'ss01','cv01','tnum','zero';
 }
 :root{
-  --bg:#06060c;
-  --surface:#0e0e18;
-  --surface2:#141420;
-  --border:rgba(255,255,255,.06);
-  --bh:rgba(255,255,255,.1);
-  --accent:#8b7cf7;
-  --accent2:#6dd5c8;
-  --adim:rgba(139,124,247,.1);
-  --adim2:rgba(109,213,200,.1);
-  --t1:#eaebf4;--t2:#7e7f96;--t3:#4a4b5e;
-  --rlg:18px;--rmd:14px;--rsm:10px;
+  --bg:#0a0a0a;
+  --surface:#111111;
+  --surface2:#171717;
+  --press:#1e1e1e;
+  --line:rgba(255,255,255,.07);
+  --line2:rgba(255,255,255,.14);
+  --line3:rgba(255,255,255,.28);
+  --white:#ffffff;
+  --t1:#ededed;
+  --t2:#8a8a8a;
+  --t3:#5a5a5a;
+  --t4:#333333;
+  --r:12px;--r-sm:8px;--r-xs:6px;
   --sb:env(safe-area-inset-bottom,0px);
   --th:60px;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Mono",Consolas,monospace;
 }
 .app{height:100%;display:flex;flex-direction:column;max-width:440px;margin:0 auto;position:relative;overflow:hidden}
-.scroll{
-  flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
-  padding:0 16px 16px;
-  padding-bottom:calc(var(--th) + var(--sb) + 20px);
-}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 18px calc(var(--th) + var(--sb) + 20px)}
 .scroll::-webkit-scrollbar{display:none}
 
-/* Pages */
-.pg{display:none;animation:fadeIn .2s ease}
+.pg{display:none}
 .pg.on{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
-/* Sub-pages — slide over */
+/* ===== HERO HEADER ===== */
+.hero{
+  padding:28px 0 32px;
+  margin-bottom:4px;
+  position:relative;
+}
+.hero::after{
+  content:'';
+  position:absolute;
+  left:0;right:0;bottom:0;
+  height:1px;
+  background:linear-gradient(90deg,var(--line2) 0%,transparent 85%);
+}
+.hero-brand{
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:32px;
+}
+.hero-mark{
+  width:48px;height:48px;
+  border-radius:12px;
+  background:linear-gradient(180deg,#1a1a1a 0%,#0f0f0f 100%);
+  border:1px solid var(--line2);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 18px rgba(0,0,0,.5);
+  position:relative;
+  flex-shrink:0;
+}
+.hero-mark::before{
+  content:'';
+  position:absolute;inset:0;border-radius:inherit;
+  background:radial-gradient(120% 80% at 30% 0%,rgba(255,255,255,.12),transparent 60%);
+  pointer-events:none;
+}
+.hero-mark svg{
+  width:22px;height:22px;
+  fill:var(--white);
+  filter:drop-shadow(0 0 8px rgba(255,255,255,.35));
+  position:relative;
+}
+.hero-name{
+  font-family:var(--mono);
+  font-size:24px;font-weight:700;
+  color:var(--white);
+  letter-spacing:-.035em;
+  line-height:1;
+}
+.hero-title{
+  font-size:40px;font-weight:800;
+  letter-spacing:-.05em;
+  color:var(--white);
+  line-height:1.02;
+}
+.hero-title em{
+  font-style:normal;
+  color:transparent;
+  -webkit-text-stroke:1.3px var(--t2);
+}
+@supports not ((-webkit-text-stroke:1px black) or (text-stroke:1px black)){
+  .hero-title em{color:var(--t2)}
+}
+
+/* ===== LEGACY HEADER ===== */
+.hdr{padding:6px 0 4px}
+.hdr .eyebrow{
+  font-family:var(--mono);font-size:10px;
+  color:var(--t3);letter-spacing:.1em;
+  text-transform:uppercase;margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.hdr .eyebrow::before{
+  content:'';width:14px;height:1px;background:var(--t3);
+}
+.hdr h1{
+  font-size:30px;font-weight:700;letter-spacing:-.04em;
+  color:var(--white);line-height:1.05;
+}
+.hdr p{font-size:13.5px;color:var(--t2);margin-top:8px;line-height:1.45;letter-spacing:-.005em}
+
+.stats{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  margin:22px 0 0;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+}
+.stat{padding:16px 10px;text-align:center;position:relative}
+.stat:not(:last-child)::after{
+  content:'';position:absolute;right:0;top:22%;height:56%;
+  width:1px;background:var(--line);
+}
+.stat .n{
+  font-family:var(--mono);font-size:20px;font-weight:600;
+  color:var(--white);letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.stat .l{
+  font-family:var(--mono);font-size:9.5px;font-weight:500;
+  color:var(--t3);text-transform:uppercase;letter-spacing:.08em;
+  margin-top:5px;
+}
+
+.stitle{
+  font-family:var(--mono);font-size:10.5px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.09em;
+  color:var(--t3);
+  margin:26px 0 10px;
+  display:flex;align-items:center;gap:8px;
+}
+.stitle .num{color:var(--t4)}
+.stitle::after{content:'';flex:1;height:1px;background:var(--line);margin-left:2px}
+
+.action-row{display:flex;flex-direction:column;gap:7px}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:13px 14px;
+  display:flex;align-items:center;gap:13px;
+  cursor:pointer;
+  transition:background .14s ease,border-color .14s ease;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+  user-select:none;
+}
+.card:active{background:var(--press);border-color:var(--line2)}
+.ico{
+  width:40px;height:40px;border-radius:var(--r-sm);
+  background:rgba(255,255,255,.025);
+  border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.ico svg{width:17px;height:17px;stroke:#c0c0c0;stroke-width:1.6;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.txt{flex:1;min-width:0}
+.txt .t{font-size:14.5px;font-weight:500;color:var(--white);letter-spacing:-.01em}
+.txt .d{font-size:12px;color:var(--t3);margin-top:3px;line-height:1.4;letter-spacing:-.005em}
+.arr{width:13px;height:13px;flex-shrink:0;opacity:.6}
+.arr svg{width:13px;height:13px;stroke:var(--t3);stroke-width:2;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+
+.csearch{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  padding:0 12px;
+  display:flex;align-items:center;gap:9px;
+  margin-bottom:7px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+.csearch svg{width:15px;height:15px;stroke:var(--t3);fill:none;stroke-width:2;flex-shrink:0}
+.csearch input{
+  flex:1;background:none;border:none;outline:none;
+  font-family:inherit;font-size:13.5px;color:var(--white);
+  padding:12px 0;letter-spacing:-.005em;
+}
+.csearch input::placeholder{color:var(--t4)}
+
+.ctable{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+.ctable::-webkit-scrollbar{width:3px}
+.ctable::-webkit-scrollbar-track{background:transparent}
+.ctable::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+
+.crow{
+  display:flex;align-items:center;
+  padding:11px 13px;cursor:pointer;
+  transition:background .1s ease;
+  border-bottom:1px solid var(--line);
+  user-select:none;
+}
+.crow:last-child{border-bottom:none}
+.crow:active{background:var(--surface2)}
+.crow.sel{background:rgba(255,255,255,.03)}
+.crow.sel .cname{color:var(--white)}
+
+.cname{flex:1;font-size:12.5px;font-weight:500;color:var(--t1);letter-spacing:-.005em}
+.cnum{
+  font-family:var(--mono);font-size:10px;color:var(--t4);
+  margin-right:10px;font-weight:500;font-variant-numeric:tabular-nums;
+}
+.ccheck{
+  width:17px;height:17px;border-radius:4px;
+  border:1.5px solid var(--t4);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .15s ease;
+}
+.crow.sel .ccheck{background:var(--white);border-color:var(--white)}
+.ccheck svg{width:10px;height:10px;stroke:#000;stroke-width:3;fill:none;opacity:0;
+  stroke-linecap:round;stroke-linejoin:round;transition:opacity .15s ease}
+.crow.sel .ccheck svg{opacity:1}
+
+.csel-bar{padding:8px 2px 0}
+.csel-name{font-size:11.5px;color:var(--white);font-weight:500;letter-spacing:-.005em}
+.csel-name.empty{color:var(--t4)}
+
+.cd-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px}
+.cd-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:16px 6px;text-align:center;cursor:pointer;
+  transition:background .14s ease,border-color .14s ease;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+  user-select:none;
+}
+.cd-card:active{background:var(--press);border-color:var(--line2)}
+.cdico{
+  width:34px;height:34px;border-radius:var(--r-sm);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 9px;
+  background:rgba(255,255,255,.025);
+  border:1px solid var(--line);
+}
+.cdico svg{width:15px;height:15px;stroke:#c0c0c0;stroke-width:1.7;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.cdlbl{font-size:12px;font-weight:500;color:var(--white);letter-spacing:-.005em}
+.cdsub{font-family:var(--mono);font-size:9.5px;color:var(--t3);margin-top:3px;letter-spacing:.02em}
+
+.confirm-wrap{margin-top:22px}
+.confirm-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;height:50px;
+  background:var(--white);
+  border:none;border-radius:var(--r-sm);
+  cursor:pointer;
+  font-family:inherit;font-size:14.5px;font-weight:600;color:#000;
+  letter-spacing:-.01em;
+  transition:opacity .14s ease;
+  box-shadow:0 1px 0 rgba(255,255,255,.15),0 4px 16px rgba(0,0,0,.4);
+  user-select:none;
+}
+.confirm-btn:active{opacity:.85}
+.confirm-btn::before{content:'▶';font-size:10px;margin-right:4px;opacity:.7}
+
+.cfilt{
+  padding:8px 12px;
+  border:1px solid var(--line);
+  border-radius:var(--r-xs);
+  background:var(--surface);
+  color:var(--t2);font-size:12px;font-weight:500;
+  cursor:pointer;
+  transition:all .14s ease;
+  font-family:inherit;
+  letter-spacing:-.005em;
+  user-select:none;
+}
+.cfilt:active{transform:scale(.97)}
+.cfilt.active{
+  border-color:var(--line3);
+  background:rgba(255,255,255,.06);
+  color:var(--white);
+}
+
+.cinfo{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:4px 14px;margin-top:16px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+.ci-row{display:flex;align-items:center;gap:12px;padding:11px 0}
+.ci-row:not(:last-child){border-bottom:1px solid var(--line)}
+.ci-label{
+  font-family:var(--mono);
+  font-size:10px;color:var(--t3);font-weight:600;
+  text-transform:uppercase;letter-spacing:.08em;
+  width:88px;flex-shrink:0;
+}
+.ci-value{font-size:13px;font-weight:500;color:var(--white);letter-spacing:-.005em}
+
+.prof{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:16px;display:flex;align-items:center;gap:13px;
+  margin-bottom:10px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+.prof .ava{
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.prof .ava svg{width:20px;height:20px;stroke:var(--t2);stroke-width:1.5;fill:none}
+.pname{font-size:15px;font-weight:600;color:var(--white);letter-spacing:-.015em}
+.pmeta{font-family:var(--mono);font-size:11px;color:var(--t3);margin-top:3px;letter-spacing:.02em}
+
+.pstats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.pstat{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:14px;text-align:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+.pv{
+  font-family:var(--mono);font-size:20px;font-weight:600;
+  color:var(--white);letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+.pl{
+  font-family:var(--mono);font-size:9.5px;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:500;
+}
+
 .subpg{
   position:absolute;top:0;left:0;right:0;bottom:0;
   background:var(--bg);z-index:50;
   transform:translateX(100%);
-  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  transition:transform .26s cubic-bezier(.32,.72,.14,1);
   overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:0 16px;
+  padding:0 18px;
   padding-bottom:calc(var(--th) + var(--sb) + 20px);
 }
 .subpg.open{transform:translateX(0)}
 .subpg::-webkit-scrollbar{display:none}
 
-/* Back button */
 .back-btn{
-  display:flex;align-items:center;gap:6px;
-  padding:18px 0 10px;cursor:pointer;
-  font-size:14px;font-weight:600;color:var(--accent);
+  display:inline-flex;align-items:center;gap:6px;
+  padding:16px 0 8px;cursor:pointer;
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  color:var(--t2);letter-spacing:.03em;
+  transition:color .14s ease;
+  user-select:none;
 }
-.back-btn svg{width:20px;height:20px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.back-btn::before{content:'←';font-size:14px;margin-right:2px}
+.back-btn:active{color:var(--white)}
 
-/* Header */
-.hdr{padding:22px 0 6px}
-.hdr h1{
-  font-size:28px;font-weight:900;letter-spacing:-.6px;
-  background:linear-gradient(135deg,#e4e5f0 0%,#8b7cf7 50%,#6dd5c8 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.hdr p{font-size:13px;color:var(--t2);margin-top:4px;line-height:1.45}
-
-/* Stats */
-.hero-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:18px 0}
-.hero-stat{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
-  padding:16px 10px;text-align:center;position:relative;overflow:hidden;
-}
-.hero-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.5}
-.hero-stat .num{font-size:24px;font-weight:800;color:var(--t1)}
-.hero-stat .lbl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
-
-/* Section title */
-.stitle{
-  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);
-  margin:22px 0 10px 4px;display:flex;align-items:center;gap:6px;
-}
-.stitle svg{width:13px;height:13px;stroke:var(--t3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-
-/* Action cards */
-.action-row{display:flex;flex-direction:column;gap:8px}
-.acard{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
-  padding:16px;display:flex;align-items:center;gap:14px;
-  cursor:pointer;transition:all .12s;position:relative;overflow:hidden;
-}
-.acard:active{transform:scale(.98);background:var(--surface2)}
-.aico{width:44px;height:44px;border-radius:var(--rmd);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.aico svg{width:20px;height:20px;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.atxt{flex:1;min-width:0}
-.at{font-size:15px;font-weight:700;color:var(--t1)}
-.ad{font-size:12px;color:var(--t2);margin-top:2px;line-height:1.35}
-.arr{width:18px;height:18px;flex-shrink:0}
-.arr svg{width:18px;height:18px;stroke:var(--t3);stroke-width:2;fill:none}
-
-/* Icon colors */
-.v1{background:var(--adim)}.v1 svg{stroke:var(--accent)}
-.v2{background:var(--adim2)}.v2 svg{stroke:var(--accent2)}
-.v3{background:rgba(251,191,36,.1)}.v3 svg{stroke:#fbbf24}
-.v4{background:rgba(244,114,182,.1)}.v4 svg{stroke:#f472b6}
-.v5{background:rgba(96,165,250,.1)}.v5 svg{stroke:#60a5fa}
-.v6{background:rgba(52,211,153,.1)}.v6 svg{stroke:#34d399}
-.v7{background:rgba(239,68,68,.1)}.v7 svg{stroke:#f87171}
-.v8{background:rgba(148,163,184,.08)}.v8 svg{stroke:#94a3b8}
-
-/* Info box */
-.infobox{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);padding:16px;margin-top:14px}
-.ibt{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;margin-bottom:10px;color:var(--t2)}
-.ibt svg{width:15px;height:15px;stroke:var(--t3);fill:none;stroke-width:1.8}
-.irow{display:flex;align-items:flex-start;gap:8px;padding:4px 0}
-.ck{width:14px;height:14px;flex-shrink:0;margin-top:2px}
-.ck svg{width:14px;height:14px;stroke:var(--accent);stroke-width:2.2;fill:none}
-.irow span{font-size:12px;color:var(--t2);line-height:1.4}
-
-/* Collection picker */
-.csearch{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--rmd);
-  padding:0 14px;display:flex;align-items:center;gap:10px;margin-bottom:8px;
-}
-.csearch svg{width:18px;height:18px;stroke:var(--t3);fill:none;stroke-width:2;flex-shrink:0}
-.csearch input{
-  flex:1;background:none;border:none;outline:none;
-  font-family:inherit;font-size:14px;color:var(--t1);padding:12px 0;
-}
-.csearch input::placeholder{color:var(--t3)}
-.ctable{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
-  max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;
-}
-.ctable::-webkit-scrollbar{width:3px}
-.ctable::-webkit-scrollbar-track{background:transparent}
-.ctable::-webkit-scrollbar-thumb{background:var(--t3);border-radius:3px}
-.crow{
-  display:flex;align-items:center;padding:10px 14px;cursor:pointer;
-  transition:background .1s;border-bottom:1px solid var(--border);
-}
-.crow:last-child{border-bottom:none}
-.crow:active{background:var(--surface2)}
-.crow.sel{background:rgba(139,124,247,.06)}
-.cname{flex:1;font-size:13px;font-weight:500;color:var(--t1)}
-.cnum{font-size:11px;color:var(--t3);margin-right:10px;font-weight:500}
-.ccheck{
-  width:22px;height:22px;border-radius:6px;border:2px solid var(--t3);
-  display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;
-}
-.crow.sel .ccheck{background:var(--accent);border-color:var(--accent)}
-.crow.sel .ccheck svg{opacity:1}
-.ccheck svg{width:14px;height:14px;stroke:#fff;stroke-width:2.5;fill:none;opacity:0;transition:opacity .15s}
-.csel-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 0 0}
-.csel-name{font-size:13px;color:var(--accent);font-weight:600}
-.csel-name.empty{color:var(--t3);font-weight:400}
-
-/* Cooldown grid */
-.cd-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
-.cd-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--rmd);
-  padding:16px 8px;text-align:center;cursor:pointer;transition:all .12s;
-}
-.cd-card:active{transform:scale(.95);background:var(--surface2)}
-.cdico{width:38px;height:38px;border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
-.cdlbl{font-size:12px;font-weight:600;color:var(--t2)}
-.cdsub{font-size:10px;color:var(--t3);margin-top:2px}
-
-/* Confirm button */
-.confirm-wrap{margin-top:24px;text-align:center}
-.confirm-btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;
-  width:100%;padding:16px;
-  background:linear-gradient(135deg,var(--accent),#6c5ce7);
-  border:none;border-radius:var(--rmd);cursor:pointer;
-  font-family:inherit;font-size:16px;font-weight:700;color:#fff;
-  transition:all .15s;box-shadow:0 4px 20px rgba(139,124,247,.3);
-}
-.confirm-btn:active{transform:scale(.97);opacity:.9}
-.confirm-btn svg{width:20px;height:20px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-
-/* Country filter pills */
-.cfilt{
-  flex:1;padding:8px 4px;border:1.5px solid var(--border);border-radius:var(--rsm);
-  background:var(--card);color:var(--text);font-size:13px;font-weight:600;
-  cursor:pointer;transition:all .15s;text-align:center;
-}
-.cfilt.active{border-color:var(--accent);background:rgba(139,124,247,.15);color:var(--accent)}
-
-/* Confirm info card */
-.confirm-info{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
-  padding:20px;margin-top:16px;
-}
-.ci-row{display:flex;align-items:center;gap:10px;padding:8px 0}
-.ci-row:not(:last-child){border-bottom:1px solid var(--border)}
-.ci-label{font-size:12px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;width:90px;flex-shrink:0}
-.ci-value{font-size:14px;font-weight:600;color:var(--t1)}
-
-/* Profile */
-.prof-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);
-  padding:20px 16px;display:flex;align-items:center;gap:14px;margin-bottom:14px;
-  position:relative;overflow:hidden;
-}
-.prof-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
-.prof-ava{
-  width:52px;height:52px;border-radius:50%;
-  background:linear-gradient(135deg,var(--adim),var(--adim2));
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-}
-.prof-ava svg{width:26px;height:26px;stroke:var(--t2);stroke-width:1.6;fill:none}
-.pname{font-size:17px;font-weight:800}
-.pmeta{font-size:12px;color:var(--t2);margin-top:2px}
-.prof-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.pstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--rmd);padding:14px;text-align:center}
-.pv{font-size:22px;font-weight:800}
-.pl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
-
-/* Tab bar */
 .tab-bar{
   position:fixed;bottom:0;left:0;right:0;
   height:calc(var(--th) + var(--sb));padding-bottom:var(--sb);
-  background:rgba(6,6,12,.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  border-top:1px solid var(--border);display:flex;z-index:90;
+  background:rgba(10,10,10,.92);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-top:1px solid var(--line);
+  display:flex;z-index:90;
   max-width:440px;margin:0 auto;
 }
 .tab{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;cursor:pointer;color:var(--t3);transition:color .15s;padding:6px 0;
+  gap:4px;cursor:pointer;
+  color:var(--t4);
+  transition:color .14s ease;
+  padding:6px 0;
+  user-select:none;
 }
-.tab.on{color:var(--accent)}
-.tab svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.tab span{font-size:10px;font-weight:600;letter-spacing:.3px}
+.tab.on{color:var(--white)}
+.tab svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.7;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.tab span{
+  font-family:var(--mono);font-size:9px;font-weight:500;
+  letter-spacing:.08em;text-transform:uppercase;
+}
 
-/* Toast */
 .toast{
-  position:fixed;bottom:calc(var(--th) + var(--sb) + 14px);left:50%;
-  transform:translateX(-50%) translateY(8px);
-  background:var(--surface2);border:1px solid var(--bh);border-radius:var(--rsm);
-  padding:10px 20px;font-size:13px;font-weight:500;color:var(--t1);
-  box-shadow:0 8px 32px rgba(0,0,0,.6);
-  opacity:0;transition:all .2s;z-index:200;pointer-events:none;white-space:nowrap;
+  position:fixed;
+  bottom:calc(var(--th) + var(--sb) + 14px);
+  left:50%;
+  transform:translateX(-50%) translateY(10px);
+  background:#1c1c1c;
+  border:1px solid var(--line2);
+  border-radius:var(--r-sm);
+  padding:11px 18px;
+  font-family:var(--mono);font-size:12px;font-weight:500;
+  color:var(--white);letter-spacing:.01em;
+  box-shadow:0 8px 32px rgba(0,0,0,.7);
+  opacity:0;transition:opacity .18s ease,transform .18s ease;
+  z-index:200;pointer-events:none;white-space:nowrap;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* Ambient */
-.glow-tl{position:absolute;top:-60px;left:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(139,124,247,.07) 0%,transparent 70%);pointer-events:none;z-index:0}
-.glow-br{position:absolute;bottom:40px;right:-30px;width:160px;height:160px;background:radial-gradient(circle,rgba(109,213,200,.05) 0%,transparent 70%);pointer-events:none;z-index:0}
-.pg{position:relative;z-index:1}
+.mini-label{
+  font-family:var(--mono);font-size:10px;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.09em;font-weight:600;
+  margin-bottom:9px;
+  display:flex;align-items:center;gap:8px;
+}
+.mini-label .num{color:var(--t4)}
+.check-row{
+  display:flex;align-items:center;gap:10px;
+  font-size:13.5px;cursor:pointer;
+  padding:12px 14px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  margin-bottom:6px;
+  transition:background .14s ease;
+  user-select:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+.check-row:active{background:var(--surface2)}
+.check-row span{flex:1;color:var(--white);font-weight:500;letter-spacing:-.005em}
+.check-row input{
+  width:17px;height:17px;
+  accent-color:#ffffff;
+  flex-shrink:0;
+}
+
+.foot{
+  margin-top:30px;padding:16px 0 0;
+  border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:10px;
+  color:var(--t4);text-align:center;line-height:1.9;
+  letter-spacing:.03em;
+}
+.foot b{color:var(--t2);font-weight:600}
+
+@media (hover:hover){
+  .card:hover{background:var(--surface2);border-color:var(--line2)}
+  .cd-card:hover{background:var(--surface2);border-color:var(--line2)}
+  .crow:hover{background:var(--surface2)}
+  .cfilt:hover{color:var(--white);border-color:var(--line2)}
+  .confirm-btn:hover{opacity:.9}
+  .tab:hover{color:var(--t2)}
+  .back-btn:hover{color:var(--white)}
+  .check-row:hover{background:var(--surface2)}
+}
 </style>
 </head>
 <body>
 
 <div class="app">
-<div class="glow-tl"></div>
-<div class="glow-br"></div>
-
 <div class="scroll" id="main-scroll">
 
-  <!-- ====== HOME ====== -->
+  <!-- ============ HOME ============ -->
   <div class="pg on" id="pg-home">
-    <div class="hdr"><h1>NFT Parser</h1><p>Умный поиск владельцев Telegram-подарков. Парсинг, фильтрация, аналитика.</p></div>
 
-    <div class="hero-stats">
-      <div class="hero-stat"><div class="num">110</div><div class="lbl">Коллекций</div></div>
-      <div class="hero-stat"><div class="num" id="hs-found">0</div><div class="lbl">Найдено</div></div>
-      <div class="hero-stat"><div class="num" id="hs-scanned">0</div><div class="lbl">Обработано</div></div>
+    <div class="hero">
+      <div class="hero-brand">
+        <div class="hero-mark">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1L12 18.2l-6.2 3.8 1.7-7.1L2 10.2l7.2-.6z"/></svg>
+        </div>
+        <span class="hero-name">Star</span>
+      </div>
+
+      <h1 class="hero-title">
+        Найди профит<br>
+        в <em>Telegram</em>
+      </h1>
     </div>
 
-    <div class="stitle"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Быстрые действия</div>
+    <div class="stats">
+      <div class="stat"><div class="n">110</div><div class="l">Коллекций</div></div>
+      <div class="stat"><div class="n" id="hs-found">0</div><div class="l">Найдено</div></div>
+      <div class="stat"><div class="n" id="hs-scanned">0</div><div class="l">Сканов</div></div>
+    </div>
+
+    <div class="stitle"><span class="num">[01]</span> Движняки</div>
 
     <div class="action-row">
-      <div class="acard" onclick="go('parser')">
-        <div class="aico v1"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></div>
-        <div class="atxt"><div class="at">Парсинг владельцев</div><div class="ad">Выбери коллекцию и найди китайцев, русских, девушек или случайных</div></div>
+      <div class="card" onclick="go('parser')">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg></div>
+        <div class="txt"><div class="t">Пробив мамонтов</div><div class="d">Найдём лошка с подарочком</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div class="acard" onclick="openSub('cooldown')">
-        <div class="aico v3"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-        <div class="atxt"><div class="at">Кулдаун-фильтр</div><div class="ad">Поиск подарков без кулдауна, скоро снятие или сейчас на КД</div></div>
+      <div class="card" onclick="openSub('cooldown')">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="txt"><div class="t">КД-фильтр</div><div class="d">Когда можно двинуть тачку</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div class="acard" onclick="openSub('market')">
-        <div class="aico v2"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
-        <div class="atxt"><div class="at">Маркет Telegram</div><div class="ad">Подарки выставленные на продажу за звёзды внутри ТГ</div></div>
+      <div class="card" onclick="openSub('market')">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+        <div class="txt"><div class="t">Маркет</div><div class="d">Что уже выставили за звёзды</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
     </div>
 
-    <div class="infobox">
-      <div class="ibt"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Как это работает</div>
-      <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Выбери коллекцию подарка из списка</span></div>
-      <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Нажми нужный фильтр — откроется подтверждение</span></div>
-      <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Нажми «Начать парсинг» — результаты придут в чат</span></div>
+    <div class="foot">
+    <div>Made by Vzloi Group</div>
     </div>
   </div>
 
-  <!-- ====== PARSER ====== -->
+  <!-- ============ PARSER ============ -->
   <div class="pg" id="pg-parser">
-    <div class="hdr"><h1>Парсинг</h1><p>Выбери коллекцию, затем нажми нужный фильтр.</p></div>
+    <div class="hdr">
+      <div class="eyebrow">module / parser</div>
+      <h1>Пробив</h1>
+      <p>Сначала цель, потом фильтры</p>
+    </div>
+
+    <div class="stitle" style="margin-top:20px"><span class="num">[01]</span> Цель</div>
 
     <div class="cpicker">
       <div class="csearch">
         <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" id="gift-search" placeholder="Поиск подарка…" autocomplete="off">
+        <input type="text" id="gift-search" placeholder="Поиск подарочка" autocomplete="off">
       </div>
       <div class="ctable" id="gift-list"></div>
-      <div class="csel-bar"><div class="csel-name empty" id="sel-label">Подарок не выбран</div></div>
+      <div class="csel-bar"><div class="csel-name empty" id="sel-label">— Ничего не выбрано</div></div>
     </div>
 
-    <div class="stitle"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Поиск по типу владельца</div>
+    <div class="stitle"><span class="num">[02]</span> Кого пробиваем</div>
 
     <div class="action-row">
-      <div class="acard" onclick="openSub('country-pick')">
-        <div class="aico v1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-        <div class="atxt"><div class="at">🌍 По стране</div><div class="ad">Поиск владельцев по национальности (12 стран)</div></div>
+      <div class="card" onclick="openSub('country-pick')">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="txt"><div class="t">По стране</div><div class="d">12 стран, кириллица и иероглифы</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div class="acard" onclick="confirmAction('girls')">
-        <div class="aico v4"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M12 13v8"/><path d="M9 18h6"/></svg></div>
-        <div class="atxt"><div class="at">AI-поиск девушек</div><div class="ad">Нейросеть проверяет имя — находит женские аккаунты</div></div>
+      <div class="card" onclick="confirmAction('girls')">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M12 13v8"/><path d="M9 18h6"/></svg></div>
+        <div class="txt"><div class="t">AI-поиск девушек</div><div class="d">Нейронка палит женские имена</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div class="acard" onclick="confirmAction('random')">
-        <div class="aico v2"><svg viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></div>
-        <div class="atxt"><div class="at">Случайный поиск</div><div class="ad">Случайные владельцы из коллекции</div></div>
+      <div class="card" onclick="confirmAction('random')">
+        <div class="ico"><svg viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></div>
+        <div class="txt"><div class="t">Рандом</div><div class="d">Просто рандом из базы</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div class="acard" onclick="confirmAction('original')">
-        <div class="aico v6"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-        <div class="atxt"><div class="at">Никогда не передавались</div><div class="ad">Подарки которые всегда были у одного владельца</div></div>
+      <div class="card" onclick="confirmAction('original')">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="txt"><div class="t">Оригинальные</div><div class="d">Никогда не передавались</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
     </div>
 
-    <div class="stitle" style="margin-top:24px"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>Комбо-поиск</div>
-    <div class="acard" onclick="openSub('combo')">
-      <div class="aico v4"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
-      <div class="atxt"><div class="at">🎛 Несколько NFT + фильтры сразу</div><div class="ad">Выбери несколько коллекций и условий (девушки + страна + не передавались + маркет)</div></div>
+    <div class="stitle"><span class="num">[03]</span> Комбо</div>
+    <div class="card" onclick="openSub('combo')">
+      <div class="ico"><svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
+      <div class="txt"><div class="t">Мультифрукт</div><div class="d">До 6 коллекций сразу</div></div>
       <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
 
-    <div class="stitle" style="margin-top:24px"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Fragment (TON)</div>
+    <div class="stitle"><span class="num">[04]</span> Fragment / TON</div>
     <div class="action-row">
-      <div class="acard" onclick="sendAction('numbers')">
-        <div class="aico v3"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
-        <div class="atxt"><div class="at">+888 номера</div><div class="ad">Владельцы виртуальных номеров Fragment — кошельки и юзернеймы</div></div>
+      <div class="card" onclick="sendAction('numbers')">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+        <div class="txt"><div class="t">+888 номера</div><div class="d">Анонимные номера, кошельки</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
-      <div class="acard" onclick="sendAction('nft_usernames')">
-        <div class="aico v5"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3h5v5"/><path d="m21 3-5 5"/></svg></div>
-        <div class="atxt"><div class="at">NFT юзернеймы</div><div class="ad">Автопоиск NFT юзернеймов из TON блокчейна — кошельки и владельцы</div></div>
+      <div class="card" onclick="sendAction('nft_usernames')">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div class="txt"><div class="t">NFT юзернеймы</div><div class="d">Парсим TON по дешману</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
     </div>
 
-    <div class="stitle" style="margin-top:24px"><svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>Неулучшенные подарки</div>
+    <div class="stitle"><span class="num">[05]</span> Неулучшенные</div>
     <div class="action-row" id="non-upgraded-section"></div>
 
-    <div class="stitle" style="margin-top:24px"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Управление</div>
-    <div class="acard" onclick="sendAction('reset_viewed')">
-      <div class="aico v7"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
-      <div class="atxt"><div class="at">Сбросить просмотренных</div><div class="ad">Очистить историю — повторный парсинг покажет всех заново</div></div>
+    <div class="stitle"><span class="num">[06]</span> Система</div>
+    <div class="card" onclick="sendAction('reset_viewed')">
+      <div class="ico"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
+      <div class="txt"><div class="t">Сброс истории</div><div class="d">Очистить просмотренных</div></div>
       <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
   </div>
 
-  <!-- ====== PROFILE ====== -->
+  <!-- ============ PROFILE ============ -->
   <div class="pg" id="pg-profile">
-    <div class="hdr"><h1>Профиль</h1><p>Ваш аккаунт и статистика</p></div>
-
-    <div class="prof-card">
-      <div class="prof-ava"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-      <div class="prof-info"><div class="pname" id="p-name">Пользователь</div><div class="pmeta" id="p-meta">Telegram</div></div>
+    <div class="hdr">
+      <div class="eyebrow">account</div>
+      <h1>Юзер</h1>
     </div>
 
-    <div class="prof-stats">
+    <div class="prof" style="margin-top:16px">
+      <div class="ava"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+      <div>
+        <div class="pname" id="p-name">—</div>
+        <div class="pmeta" id="p-meta">Telegram</div>
+      </div>
+    </div>
+
+    <div class="pstats">
       <div class="pstat"><div class="pv" id="p-found">0</div><div class="pl">Найдено</div></div>
-      <div class="pstat"><div class="pv" id="p-scanned">0</div><div class="pl">Обработано</div></div>
+      <div class="pstat"><div class="pv" id="p-scanned">0</div><div class="pl">Пробито</div></div>
     </div>
 
-    <div class="stitle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Управление</div>
-
+    <div class="stitle"><span class="num">[!]</span> Управление</div>
     <div class="action-row">
-      <div class="acard" onclick="sendAction('reset_viewed')">
-        <div class="aico v7"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
-        <div class="atxt"><div class="at">Сбросить просмотренных</div><div class="ad">Удалить всю историю парсинга и начать с чистого листа</div></div>
+      <div class="card" onclick="sendAction('reset_viewed')">
+        <div class="ico"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></div>
+        <div class="txt"><div class="t">Сбросить просмотренных</div><div class="d">Начать с чистого листа</div></div>
         <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
     </div>
-  </div>
 
-</div><!-- /scroll -->
-
-<!-- ====== SUB-PAGE: COMBO ====== -->
-<div class="subpg" id="sub-combo">
-  <div class="back-btn" onclick="closeSub()">
-    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Назад
-  </div>
-  <div class="hdr" style="padding-top:4px"><h1>🎛 Комбо-поиск</h1><p>Несколько NFT + несколько фильтров сразу (логика «И»)</p></div>
-
-  <div style="padding:0 16px;margin-top:8px">
-    <div style="font-size:13px;color:var(--hint);margin-bottom:6px">🎁 Коллекции (можно несколько, до 6)</div>
-    <div class="cpicker" style="margin:0">
-      <div class="csearch">
-        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-        <input type="text" id="combo-gift-search" placeholder="Поиск подарка…" autocomplete="off">
-      </div>
-      <div class="ctable" id="combo-gift-list"></div>
-      <div class="csel-bar"><div class="csel-name empty" id="combo-sel-label">Ничего не выбрано</div></div>
+    <div class="foot">
+      <div><b>Star</b> · Made by Vzloi Group</div>
+      <div>Не забудь выйти из аккаунта мамы</div>
     </div>
   </div>
 
-  <div style="padding:0 16px;margin-top:14px">
-    <div style="font-size:13px;color:var(--hint);margin-bottom:6px">🎯 Фильтры</div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:6px 0">
-      <input type="checkbox" id="combo-girls" style="width:18px;height:18px;accent-color:var(--accent)">
-      <span>👩 Только девушки (AI)</span>
+</div>
+
+<!-- ============ COMBO ============ -->
+<div class="subpg" id="sub-combo">
+  <div class="back-btn" onclick="closeSub()">Назад</div>
+  <div class="hdr">
+    <div class="eyebrow">module / combo</div>
+    <h1>Комбо</h1>
+    <p>Несколько NFT + фильтры сразу</p>
+  </div>
+
+  <div style="margin-top:16px">
+    <div class="mini-label"><span class="num">[01]</span> Коллекции · до 6</div>
+    <div class="cpicker">
+      <div class="csearch">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="combo-gift-search" placeholder="Поиск подарочка" autocomplete="off">
+      </div>
+      <div class="ctable" id="combo-gift-list"></div>
+      <div class="csel-bar"><div class="csel-name empty" id="combo-sel-label">— Ничего не выбрано</div></div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px">
+    <div class="mini-label"><span class="num">[02]</span> Фильтры</div>
+    <label class="check-row">
+      <span>Только девушки (AI)</span>
+      <input type="checkbox" id="combo-girls">
     </label>
-    <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:6px 0">
-      <input type="checkbox" id="combo-orig" style="width:18px;height:18px;accent-color:var(--accent)">
-      <span>🆕 Никогда не передавались</span>
+    <label class="check-row">
+      <span>Никогда не передавались</span>
+      <input type="checkbox" id="combo-orig">
     </label>
-    <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;padding:6px 0">
-      <input type="checkbox" id="combo-market" style="width:18px;height:18px;accent-color:var(--accent)">
-      <span>🛒 Только на маркете (за ⭐)</span>
+    <label class="check-row">
+      <span>Только на маркете</span>
+      <input type="checkbox" id="combo-market">
     </label>
   </div>
 
-  <div style="padding:0 16px;margin-top:10px">
-    <div style="font-size:13px;color:var(--hint);margin-bottom:6px">🌍 Страна владельца</div>
+  <div style="margin-top:20px">
+    <div class="mini-label"><span class="num">[03]</span> Страна</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
-      <button class="cfilt combo-cf active" data-country="all" onclick="setComboCountry(this)">🌍 Любая</button>
-      <button class="cfilt combo-cf" data-country="cn" onclick="setComboCountry(this)">🇨🇳 Китай</button>
-      <button class="cfilt combo-cf" data-country="ru" onclick="setComboCountry(this)">🇷🇺 Россия</button>
-      <button class="cfilt combo-cf" data-country="uz" onclick="setComboCountry(this)">🇺🇿 Узбекистан</button>
-      <button class="cfilt combo-cf" data-country="kz" onclick="setComboCountry(this)">🇰🇿 Казахстан</button>
-      <button class="cfilt combo-cf" data-country="kg" onclick="setComboCountry(this)">🇰🇬 Киргизия</button>
-      <button class="cfilt combo-cf" data-country="tj" onclick="setComboCountry(this)">🇹🇯 Таджикистан</button>
-      <button class="cfilt combo-cf" data-country="in" onclick="setComboCountry(this)">🇮🇳 Индия</button>
-      <button class="cfilt combo-cf" data-country="ar" onclick="setComboCountry(this)">🇸🇦 Арабы</button>
-      <button class="cfilt combo-cf" data-country="id" onclick="setComboCountry(this)">🇮🇩 Индонезия</button>
-      <button class="cfilt combo-cf" data-country="jp" onclick="setComboCountry(this)">🇯🇵 Япония</button>
-      <button class="cfilt combo-cf" data-country="kr" onclick="setComboCountry(this)">🇰🇷 Корея</button>
-      <button class="cfilt combo-cf" data-country="tr" onclick="setComboCountry(this)">🇹🇷 Турция</button>
+      <button class="cfilt combo-cf active" data-country="all" onclick="setComboCountry(this)">Любая</button>
+      <button class="cfilt combo-cf" data-country="cn" onclick="setComboCountry(this)">🇨🇳 cn</button>
+      <button class="cfilt combo-cf" data-country="ru" onclick="setComboCountry(this)">🇷🇺 ru</button>
+      <button class="cfilt combo-cf" data-country="uz" onclick="setComboCountry(this)">🇺🇿 uz</button>
+      <button class="cfilt combo-cf" data-country="kz" onclick="setComboCountry(this)">🇰🇿 kz</button>
+      <button class="cfilt combo-cf" data-country="kg" onclick="setComboCountry(this)">🇰🇬 kg</button>
+      <button class="cfilt combo-cf" data-country="tj" onclick="setComboCountry(this)">🇹🇯 tj</button>
+      <button class="cfilt combo-cf" data-country="in" onclick="setComboCountry(this)">🇮🇳 in</button>
+      <button class="cfilt combo-cf" data-country="ar" onclick="setComboCountry(this)">🇸🇦 ar</button>
+      <button class="cfilt combo-cf" data-country="id" onclick="setComboCountry(this)">🇮🇩 id</button>
+      <button class="cfilt combo-cf" data-country="jp" onclick="setComboCountry(this)">🇯🇵 jp</button>
+      <button class="cfilt combo-cf" data-country="kr" onclick="setComboCountry(this)">🇰🇷 kr</button>
+      <button class="cfilt combo-cf" data-country="tr" onclick="setComboCountry(this)">🇹🇷 tr</button>
     </div>
   </div>
 
   <div class="confirm-wrap">
-    <button class="confirm-btn" onclick="runCombo()">
-      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      Искать
-    </button>
+    <button class="confirm-btn" onclick="runCombo()">Пробить</button>
   </div>
 </div>
 
-<!-- ====== SUB-PAGE: COUNTRY PICKER ====== -->
+<!-- ============ COUNTRY PICKER ============ -->
 <div class="subpg" id="sub-country-pick">
-  <div class="back-btn" onclick="closeSub()">
-    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Назад
+  <div class="back-btn" onclick="closeSub()">Назад</div>
+  <div class="hdr">
+    <div class="eyebrow">filter / country</div>
+    <h1>Страна</h1>
+    <p>Где живёт мамонт</p>
   </div>
-  <div class="hdr" style="padding-top:4px"><h1>🌍 По стране</h1><p>Выберите страну владельца</p></div>
-  <div class="action-row" style="margin-top:14px;padding:0 16px" id="country-cards"></div>
+  <div class="action-row" style="margin-top:16px" id="country-cards"></div>
 </div>
 
-<!-- ====== SUB-PAGE: MARKET COUNTRY PICKER ====== -->
+<!-- ============ MARKET COUNTRY PICKER ============ -->
 <div class="subpg" id="sub-market-country">
-  <div class="back-btn" onclick="closeSub()">
-    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Назад
+  <div class="back-btn" onclick="closeSub()">Назад</div>
+  <div class="hdr">
+    <div class="eyebrow">market / country</div>
+    <h1>Маркет</h1>
+    <p>Лоты по стране</p>
   </div>
-  <div class="hdr" style="padding-top:4px"><h1>🌍 Маркет: по стране</h1><p>Подарки от выбранной страны за ⭐ звёзды</p></div>
-  <div class="action-row" style="margin-top:14px;padding:0 16px" id="market-country-cards"></div>
+  <div class="action-row" style="margin-top:16px" id="market-country-cards"></div>
 </div>
 
-<!-- ====== SUB-PAGE: CONFIRM ====== -->
+<!-- ============ CONFIRM ============ -->
 <div class="subpg" id="sub-confirm">
-  <div class="back-btn" onclick="closeSub()">
-    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Назад
+  <div class="back-btn" onclick="closeSub()">Назад</div>
+  <div class="hdr">
+    <div class="eyebrow">run / confirm</div>
+    <h1 id="confirm-title">Пробиваем?</h1>
+    <p id="confirm-desc">Проверь и запускай</p>
   </div>
-  <div class="hdr" style="padding-top:4px"><h1 id="confirm-title">Подтверждение</h1><p id="confirm-desc">Проверьте настройки и запустите парсинг</p></div>
 
-  <div class="confirm-info">
+  <div class="cinfo">
     <div class="ci-row">
       <div class="ci-label">Коллекция</div>
       <div class="ci-value" id="confirm-gift">—</div>
@@ -503,133 +733,121 @@ body{
     </div>
   </div>
 
-  <!-- Country sub-filter (visible for girls/cooldown/random) -->
-  <div id="confirm-country-wrap" style="display:none;margin:12px 16px 0">
-    <div style="font-size:13px;color:var(--hint);margin-bottom:6px">Национальность</div>
+  <div id="confirm-country-wrap" style="display:none;margin-top:18px">
+    <div class="mini-label">Национальность</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
-      <button class="cfilt active" data-country="all" onclick="setCountry(this)">🌍 Все</button>
-      <button class="cfilt" data-country="cn" onclick="setCountry(this)">🇨🇳 Китай</button>
-      <button class="cfilt" data-country="ru" onclick="setCountry(this)">🇷🇺 Россия</button>
-      <button class="cfilt" data-country="uz" onclick="setCountry(this)">🇺🇿 Узбекистан</button>
-      <button class="cfilt" data-country="kz" onclick="setCountry(this)">🇰🇿 Казахстан</button>
-      <button class="cfilt" data-country="kg" onclick="setCountry(this)">🇰🇬 Киргизия</button>
-      <button class="cfilt" data-country="tj" onclick="setCountry(this)">🇹🇯 Таджикистан</button>
-      <button class="cfilt" data-country="in" onclick="setCountry(this)">🇮🇳 Индия</button>
-      <button class="cfilt" data-country="ar" onclick="setCountry(this)">🇸🇦 Арабы</button>
-      <button class="cfilt" data-country="id" onclick="setCountry(this)">🇮🇩 Индонезия</button>
-      <button class="cfilt" data-country="jp" onclick="setCountry(this)">🇯🇵 Япония</button>
-      <button class="cfilt" data-country="kr" onclick="setCountry(this)">🇰🇷 Корея</button>
-      <button class="cfilt" data-country="tr" onclick="setCountry(this)">🇹🇷 Турция</button>
+      <button class="cfilt active" data-country="all" onclick="setCountry(this)">Все</button>
+      <button class="cfilt" data-country="cn" onclick="setCountry(this)">🇨🇳 cn</button>
+      <button class="cfilt" data-country="ru" onclick="setCountry(this)">🇷🇺 ru</button>
+      <button class="cfilt" data-country="uz" onclick="setCountry(this)">🇺🇿 uz</button>
+      <button class="cfilt" data-country="kz" onclick="setCountry(this)">🇰🇿 kz</button>
+      <button class="cfilt" data-country="kg" onclick="setCountry(this)">🇰🇬 kg</button>
+      <button class="cfilt" data-country="tj" onclick="setCountry(this)">🇹🇯 tj</button>
+      <button class="cfilt" data-country="in" onclick="setCountry(this)">🇮🇳 in</button>
+      <button class="cfilt" data-country="ar" onclick="setCountry(this)">🇸🇦 ar</button>
+      <button class="cfilt" data-country="id" onclick="setCountry(this)">🇮🇩 id</button>
+      <button class="cfilt" data-country="jp" onclick="setCountry(this)">🇯🇵 jp</button>
+      <button class="cfilt" data-country="kr" onclick="setCountry(this)">🇰🇷 kr</button>
+      <button class="cfilt" data-country="tr" onclick="setCountry(this)">🇹🇷 tr</button>
     </div>
   </div>
 
-  <!-- "Never transferred" toggle (visible for random) -->
-  <div id="confirm-orig-wrap" style="display:none;margin:12px 16px 0">
-    <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer">
-      <input type="checkbox" id="confirm-orig-cb" style="width:18px;height:18px;accent-color:var(--accent)">
-      <span>🆕 Только никогда не передавались</span>
+  <div id="confirm-orig-wrap" style="display:none;margin-top:18px">
+    <label class="check-row">
+      <span>Только оригинальные</span>
+      <input type="checkbox" id="confirm-orig-cb">
     </label>
   </div>
 
-  <!-- "Any gift / all collections" toggle (visible for country search) -->
-  <div id="confirm-anygift-wrap" style="display:none;margin:12px 16px 0">
-    <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer">
-      <input type="checkbox" id="confirm-anygift-cb" style="width:18px;height:18px;accent-color:var(--accent)" onchange="onAnyGiftToggle()">
-      <span>🎲 Любой подарок — искать по всем коллекциям</span>
+  <div id="confirm-anygift-wrap" style="display:none;margin-top:18px">
+    <label class="check-row">
+      <span>Любой подарок = все коллекции</span>
+      <input type="checkbox" id="confirm-anygift-cb" onchange="onAnyGiftToggle()">
     </label>
   </div>
 
   <div class="confirm-wrap">
-    <button class="confirm-btn" id="confirm-go-btn" onclick="doConfirmedAction()">
-      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-      Начать парсинг
-    </button>
-  </div>
-
-  <div class="infobox" style="margin-top:16px">
-    <div class="ibt"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Что произойдёт</div>
-    <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Мини апп закроется</span></div>
-    <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Бот начнёт парсинг через API</span></div>
-    <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>Результаты придут прямо в чат</span></div>
+    <button class="confirm-btn" id="confirm-go-btn" onclick="doConfirmedAction()">Пробить</button>
   </div>
 </div>
 
-<!-- ====== SUB-PAGE: COOLDOWN ====== -->
+<!-- ============ COOLDOWN ============ -->
 <div class="subpg" id="sub-cooldown">
-  <div class="back-btn" onclick="closeSub()">
-    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Назад
+  <div class="back-btn" onclick="closeSub()">Назад</div>
+  <div class="hdr">
+    <div class="eyebrow">filter / cooldown</div>
+    <h1>КД-фильтр</h1>
+    <p>Когда можно двинуть подарок</p>
   </div>
-  <div class="hdr" style="padding-top:4px"><h1>Кулдаун</h1><p>Поиск подарков по статусу кулдауна после улучшения или передачи</p></div>
 
-  <div class="cpicker" style="margin-top:14px">
-    <div class="csearch">
-      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" class="sub-gift-search" placeholder="Поиск подарка…" autocomplete="off">
+  <div style="margin-top:16px">
+    <div class="mini-label"><span class="num">[01]</span> Цель</div>
+    <div class="cpicker">
+      <div class="csearch">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="sub-gift-search" placeholder="Поиск подарочка" autocomplete="off">
+      </div>
+      <div class="ctable sub-gift-list"></div>
+      <div class="csel-bar"><div class="csel-name empty sub-sel-label">— Ничего не выбрано</div></div>
     </div>
-    <div class="ctable sub-gift-list"></div>
-    <div class="csel-bar"><div class="csel-name empty sub-sel-label">Подарок не выбран</div></div>
   </div>
 
-  <div class="stitle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Выберите фильтр</div>
+  <div class="mini-label" style="margin-top:18px"><span class="num">[02]</span> Фильтр</div>
 
   <div class="cd-grid">
     <div class="cd-card" onclick="confirmAction('cd_free')">
-      <div class="cdico" style="background:rgba(52,211,153,.1)"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#34d399;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div class="cdlbl">Без КД</div><div class="cdsub">Можно передать</div>
+      <div class="cdico"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="cdlbl">Без КД</div><div class="cdsub">Передаваемо</div>
     </div>
     <div class="cd-card" onclick="confirmAction('cd_soon')">
-      <div class="cdico" style="background:rgba(251,191,36,.1)"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#fbbf24;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-      <div class="cdlbl">Скоро</div><div class="cdsub">1-2 дня</div>
+      <div class="cdico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="cdlbl">Скоро</div><div class="cdsub">1–2 дня</div>
     </div>
     <div class="cd-card" onclick="confirmAction('cd_active')">
-      <div class="cdico" style="background:rgba(239,68,68,.1)"><svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#f87171;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
-      <div class="cdlbl">На КД</div><div class="cdsub">Ждём снятия</div>
+      <div class="cdico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+      <div class="cdlbl">На КД</div><div class="cdsub">Заблокировано</div>
     </div>
-  </div>
-
-  <div class="infobox">
-    <div class="ibt"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Что такое кулдаун</div>
-    <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>После улучшения — нельзя передать 7 дней</span></div>
-    <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>«Без КД» — кулдаун уже прошёл, можно передать</span></div>
-    <div class="irow"><div class="ck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><span>«Скоро» — осталось 1-2 дня до снятия</span></div>
   </div>
 </div>
 
-<!-- ====== SUB-PAGE: MARKET ====== -->
+<!-- ============ MARKET ============ -->
 <div class="subpg" id="sub-market">
-  <div class="back-btn" onclick="closeSub()">
-    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    Назад
+  <div class="back-btn" onclick="closeSub()">Назад</div>
+  <div class="hdr">
+    <div class="eyebrow">module / market</div>
+    <h1>Маркет</h1>
+    <p>Что уже выставили за звёзды</p>
   </div>
-  <div class="hdr" style="padding-top:4px"><h1>Маркет</h1><p>Подарки выставленные на внутреннем маркете Telegram за звёзды</p></div>
 
-  <div class="cpicker" style="margin-top:14px">
-    <div class="csearch">
-      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" class="sub-gift-search" placeholder="Поиск подарка…" autocomplete="off">
+  <div style="margin-top:16px">
+    <div class="mini-label"><span class="num">[01]</span> Цель</div>
+    <div class="cpicker">
+      <div class="csearch">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" class="sub-gift-search" placeholder="Поиск подарочка" autocomplete="off">
+      </div>
+      <div class="ctable sub-gift-list"></div>
+      <div class="csel-bar"><div class="csel-name empty sub-sel-label">— Ничего не выбрано</div></div>
     </div>
-    <div class="ctable sub-gift-list"></div>
-    <div class="csel-bar"><div class="csel-name empty sub-sel-label">Подарок не выбран</div></div>
   </div>
 
-  <div class="stitle"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Фильтр маркета</div>
+  <div class="mini-label" style="margin-top:18px"><span class="num">[02]</span> Фильтр</div>
 
   <div class="action-row">
-    <div class="acard" onclick="openSub('market-country')">
-      <div class="aico v1"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-      <div class="atxt"><div class="at">🌍 По стране</div><div class="ad">Подарки от выбранной страны за ⭐ звёзды</div></div>
+    <div class="card" onclick="openSub('market-country')">
+      <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+      <div class="txt"><div class="t">По стране</div><div class="d">Лоты от конкретной страны</div></div>
       <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
-    <div class="acard" onclick="confirmAction('market_all')">
-      <div class="aico v2"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
-      <div class="atxt"><div class="at">Все лоты на маркете</div><div class="ad">Все подарки на продаже внутри Telegram</div></div>
+    <div class="card" onclick="confirmAction('market_all')">
+      <div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+      <div class="txt"><div class="t">Все лоты</div><div class="d">Без фильтров, всё что есть</div></div>
       <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
   </div>
 </div>
 
-<!-- TAB BAR -->
+<!-- ============ TAB BAR ============ -->
 <div class="tab-bar">
   <div class="tab on" onclick="go('home')">
     <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -637,11 +855,11 @@ body{
   </div>
   <div class="tab" onclick="go('parser')">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-    <span>Парсинг</span>
+    <span>Пробив</span>
   </div>
   <div class="tab" onclick="go('profile')">
     <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>Профиль</span>
+    <span>Юзер</span>
   </div>
 </div>
 
@@ -650,70 +868,49 @@ body{
 
 <script>
 const tg=window.Telegram?.WebApp;
-if(tg){tg.ready();tg.expand();tg.setHeaderColor('#06060c');tg.setBackgroundColor('#06060c');
+if(tg){tg.ready();tg.expand();tg.setHeaderColor('#0a0a0a');tg.setBackgroundColor('#0a0a0a');
   const u=tg.initDataUnsafe?.user;
   if(u){document.getElementById('p-name').textContent=[u.first_name,u.last_name].filter(Boolean).join(' ');
-    document.getElementById('p-meta').textContent=u.username?`@${u.username}  ·  ID ${u.id}`:`ID ${u.id}`}}
+    document.getElementById('p-meta').textContent=u.username?`@${u.username} · ${u.id}`:`id ${u.id}`}}
 
-// === ALL 106 REAL GIFTS FROM peek.tg ===
 const GIFTS=["Artisan Brick","Astral Shard","B-Day Candle","Berry Box","Big Year","Bling Binky","Bonded Ring","Bow Tie","Bunny Muffin","Candy Cane","Clover Pin","Cookie Heart","Crystal Ball","Cupid Charm","Desk Calendar","Diamond Ring","Durov's Cap","Easter Egg","Electric Skull","Eternal Candle","Eternal Rose","Evil Eye","Faith Amulet","Flying Broom","Fresh Socks","Gem Signet","Genie Lamp","Ginger Cookie","Hanging Star","Happy Brownie","Heart Locket","Heroic Helmet","Hex Pot","Holiday Drink","Homemade Cake","Hypno Lollipop","Ice Cream","Input Key","Instant Ramen","Ion Gem","Ionic Dryer","Jack in the Box","Jelly Bunny","Jester Hat","Jingle Bells","Jolly Chimp","Joyful Bundle","Khabib's Papakha","Kissed Frog","Light Sword","Lol Pop","Loot Bag","Love Candle","Love Potion","Low Rider","Lunar Snake","Lush Bouquet","Mad Pumpkin","Magic Potion","Mighty Arm","Mini Oscar","Money Pot","Moon Pendant","Mousse Cake","Nail Bracelet","Neko Helmet","Party Sparkler","Perfume Bottle","Pet Snake","Plush Pepe","Precious Peach","Pretty Posy","Record Player","Restless Jar","Sakura Flower","Santa Hat","Scared Cat","Sharp Tongue","Signet Ring","Skull Flower","Sky Stilettos","Sleigh Bell","Snake Box","Snoop Cigar","Snoop Dogg","Snow Globe","Snow Mittens","Spiced Wine","Spring Basket","Spy Agaric","Star Notepad","Stellar Rocket","Swag Bag","Swiss Watch","Tama Gadget","Top Hat","Toy Bear","Trapped Heart","Valentine Box","Vintage Cigar","Voodoo Doll","Westside Sign","Whip Cupcake","Winter Wreath","Witch Hat","Xmas Stocking"];
 
 let selectedGift=null;
 let pendingAction=null;
 
-// Country data
 const COUNTRIES=[
-  {code:'cn',flag:'🇨🇳',name:'Китай',desc:'Иероглифы в имени'},
-  {code:'ru',flag:'🇷🇺',name:'Россия',desc:'Кириллица в имени'},
-  {code:'uz',flag:'🇺🇿',name:'Узбекистан',desc:'Узбекские имена'},
-  {code:'kz',flag:'🇰🇿',name:'Казахстан',desc:'Казахские имена'},
-  {code:'kg',flag:'🇰🇬',name:'Киргизия',desc:'Киргизские имена'},
-  {code:'tj',flag:'🇹🇯',name:'Таджикистан',desc:'Таджикские имена'},
-  {code:'in',flag:'🇮🇳',name:'Индия',desc:'Индийские скрипты и имена'},
-  {code:'ar',flag:'🇸🇦',name:'Арабы',desc:'Арабское письмо'},
-  {code:'id',flag:'🇮🇩',name:'Индонезия',desc:'Индонезийские имена'},
-  {code:'jp',flag:'🇯🇵',name:'Япония',desc:'Хирагана / катакана'},
-  {code:'kr',flag:'🇰🇷',name:'Корея',desc:'Хангыль в имени'},
-  {code:'tr',flag:'🇹🇷',name:'Турция',desc:'Турецкие имена'},
+  {code:'cn',flag:'🇨🇳',name:'Китай'},
+  {code:'ru',flag:'🇷🇺',name:'Россия'},
+  {code:'uz',flag:'🇺🇿',name:'Узбекистан'},
+  {code:'kz',flag:'🇰🇿',name:'Казахстан'},
+  {code:'kg',flag:'🇰🇬',name:'Киргизия'},
+  {code:'tj',flag:'🇹🇯',name:'Таджикистан'},
+  {code:'in',flag:'🇮🇳',name:'Индия'},
+  {code:'ar',flag:'🇸🇦',name:'Арабы'},
+  {code:'id',flag:'🇮🇩',name:'Индонезия'},
+  {code:'jp',flag:'🇯🇵',name:'Япония'},
+  {code:'kr',flag:'🇰🇷',name:'Корея'},
+  {code:'tr',flag:'🇹🇷',name:'Турция'},
 ];
 
-// Build action labels/descs dynamically
 const ACTION_LABELS={
-  girls:'👩 AI-поиск девушек',
-  random:'🎲 Случайный поиск',
-  original:'🔗 Оригинальные владельцы',
-  market_all:'🛒 Маркет: все лоты',
-  cd_free:'✅ Без кулдауна',
-  cd_soon:'⏳ Скоро снятие КД',
-  cd_active:'🔴 На кулдауне',
+  girls:'AI-поиск девушек',
+  random:'Рандом',
+  original:'Оригинальные',
+  market_all:'Маркет · все лоты',
+  cd_free:'Без КД',
+  cd_soon:'Скоро снятие',
+  cd_active:'На КД',
 };
-const ACTION_DESCS={
-  girls:'AI проверит имена и определит женские аккаунты',
-  random:'Бот выдаст случайных владельцев из этой коллекции',
-  original:'Бот найдёт подарки которые никогда не передавались',
-  market_all:'Все подарки на продаже на внутреннем маркете Telegram',
-  cd_free:'Подарки у которых кулдаун уже прошёл — можно передать',
-  cd_soon:'Подарки у которых кулдаун снимется через 1-2 дня',
-  cd_active:'Подарки которые сейчас на кулдауне',
-};
-// Add country actions
 COUNTRIES.forEach(c=>{
-  ACTION_LABELS['country_'+c.code]=c.flag+' Поиск: '+c.name;
-  ACTION_DESCS['country_'+c.code]='Бот найдёт владельцев — '+c.desc;
-  ACTION_LABELS['market_'+c.code]=c.flag+' Маркет: '+c.name;
-  ACTION_DESCS['market_'+c.code]='Подарки от '+c.name+' за ⭐ звёзды';
+  ACTION_LABELS['country_'+c.code]='Поиск · '+c.name;
+  ACTION_LABELS['market_'+c.code]='Маркет · '+c.name;
 });
-// Legacy aliases
-ACTION_LABELS.chinese='🇨🇳 Поиск китайцев';
-ACTION_LABELS.russian='🇷🇺 Поиск русских';
-ACTION_LABELS.market_chinese='🇨🇳 Маркет: китайцы';
-ACTION_LABELS.market_russian='🇷🇺 Маркет: русские';
-ACTION_DESCS.chinese='Бот найдёт всех владельцев с китайскими иероглифами в имени';
-ACTION_DESCS.russian='Бот найдёт всех владельцев с кириллицей в имени';
-ACTION_DESCS.market_chinese='Подарки от китайцев, выставленные за звёзды на маркете TG';
-ACTION_DESCS.market_russian='Подарки от русских, выставленные за звёзды на маркете TG';
+ACTION_LABELS.chinese='Поиск китайцев';
+ACTION_LABELS.russian='Поиск русских';
+ACTION_LABELS.market_chinese='Маркет · китайцы';
+ACTION_LABELS.market_russian='Маркет · русские';
 
-// Main parser page gift list
 function renderGifts(filter=''){
   const el=document.getElementById('gift-list');
   const f=filter.toLowerCase();
@@ -721,10 +918,10 @@ function renderGifts(filter=''){
   el.innerHTML=filtered.map(x=>`
     <div class="crow${selectedGift===x.name?' sel':''}" onclick="pickGift('${x.name.replace(/'/g,"\\'")}')">
       <div class="cname">${x.name}</div>
-      <div class="cnum">#${x.i+1}</div>
-      <div class="ccheck"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="cnum">#${String(x.i+1).padStart(3,'0')}</div>
+      <div class="ccheck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
     </div>`).join('');
-  if(!filtered.length) el.innerHTML='<div style="padding:16px;text-align:center;color:var(--t3);font-size:13px">Ничего не найдено</div>';
+  if(!filtered.length) el.innerHTML='<div style="padding:18px;text-align:center;color:var(--t4);font-size:12px;font-family:var(--mono)">— Пусто</div>';
 }
 
 function pickGift(name){
@@ -747,8 +944,8 @@ function pickGiftSub(name,listEl,labelEl,searchEl){
 
 function updateSelLabel(el){
   if(!el)return;
-  if(selectedGift){el.textContent='✓ '+selectedGift;el.classList.remove('empty')}
-  else{el.textContent='Подарок не выбран';el.classList.add('empty')}
+  if(selectedGift){el.textContent='> '+selectedGift;el.classList.remove('empty')}
+  else{el.textContent='— Ничего не выбрано';el.classList.add('empty')}
 }
 
 function renderSubGifts(listEl,filter){
@@ -757,10 +954,10 @@ function renderSubGifts(listEl,filter){
   listEl.innerHTML=filtered.map(x=>`
     <div class="crow${selectedGift===x.name?' sel':''}" onclick="pickGiftSub('${x.name.replace(/'/g,"\\'")}',this.closest('.ctable'),this.closest('.cpicker').querySelector('.sub-sel-label'),this.closest('.cpicker').querySelector('.sub-gift-search'))">
       <div class="cname">${x.name}</div>
-      <div class="cnum">#${x.i+1}</div>
-      <div class="ccheck"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="cnum">#${String(x.i+1).padStart(3,'0')}</div>
+      <div class="ccheck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
     </div>`).join('');
-  if(!filtered.length) listEl.innerHTML='<div style="padding:16px;text-align:center;color:var(--t3);font-size:13px">Ничего не найдено</div>';
+  if(!filtered.length) listEl.innerHTML='<div style="padding:18px;text-align:center;color:var(--t4);font-size:12px;font-family:var(--mono)">— Пусто</div>';
 }
 
 document.getElementById('gift-search').addEventListener('input',e=>renderGifts(e.target.value));
@@ -774,7 +971,6 @@ document.querySelectorAll('.sub-gift-search').forEach(inp=>{
 renderGifts();
 document.querySelectorAll('.sub-gift-list').forEach(el=>renderSubGifts(el,''));
 
-// === NAV ===
 const tabs=document.querySelectorAll('.tab');
 const pgs=document.querySelectorAll('.pg');
 
@@ -789,7 +985,6 @@ function go(name){
   if(tg)tg.HapticFeedback?.impactOccurred('light');
 }
 
-// Sub-pages
 function openSub(name){
   const el=document.getElementById('sub-'+name);
   if(el){el.classList.add('open');el.scrollTop=0;
@@ -807,10 +1002,9 @@ function closeSub(){
   if(tg)tg.HapticFeedback?.impactOccurred('light');
 }
 
-// === DEEP LINK HELPERS ===
 function getBotUsername(){
   const p=new URLSearchParams(window.location.search);
-  return p.get('bot')||'MamanMom67_bot';
+  return p.get('bot')||'starparsbot';
 }
 function toApiName(n){return n.replace(/[\s\-\u2019']/g,'');}
 function deepLink(param){
@@ -821,7 +1015,6 @@ function deepLink(param){
   tg.close();
 }
 
-// Country filter state
 let selectedCountry='all';
 function setCountry(btn){
   document.querySelectorAll('.cfilt').forEach(b=>b.classList.remove('active'));
@@ -830,37 +1023,31 @@ function setCountry(btn){
   if(tg)tg.HapticFeedback?.selectionChanged();
 }
 
-// Render country picker sub-pages
 (function(){
   const globe='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
   const arr='<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
-  // Regular country search cards
   var h='';
   COUNTRIES.forEach(c=>{
-    h+=`<div class="acard" onclick="confirmAction('country_${c.code}')">
-      <div class="aico v1">${globe}</div>
-      <div class="atxt"><div class="at">${c.flag} ${c.name}</div><div class="ad">${c.desc}</div></div>
+    h+=`<div class="card" onclick="confirmAction('country_${c.code}')">
+      <div class="ico">${globe}</div>
+      <div class="txt"><div class="t">${c.flag} ${c.name}</div></div>
       <div class="arr">${arr}</div></div>`;
   });
   var el=document.getElementById('country-cards');
   if(el)el.innerHTML=h;
-  // Market country cards
   var mh='';
   COUNTRIES.forEach(c=>{
-    mh+=`<div class="acard" onclick="confirmAction('market_${c.code}')">
-      <div class="aico v1">${globe}</div>
-      <div class="atxt"><div class="at">${c.flag} ${c.name}</div><div class="ad">Подарки от ${c.name} за ⭐ звёзды</div></div>
+    mh+=`<div class="card" onclick="confirmAction('market_${c.code}')">
+      <div class="ico">${globe}</div>
+      <div class="txt"><div class="t">${c.flag} ${c.name}</div></div>
       <div class="arr">${arr}</div></div>`;
   });
   var mel=document.getElementById('market-country-cards');
   if(mel)mel.innerHTML=mh;
 })();
 
-// Actions that support country sub-filter
 const COUNTRY_ACTIONS=new Set(['girls','cd_free','cd_soon','cd_active','random']);
-// Actions that support "never transferred"
 const ORIG_ACTIONS=new Set(['random']);
-// Actions that support "any gift / all collections" random search
 const ANYGIFT_ACTIONS=new Set(['country']);
 
 function _resetConfirmOptions(){
@@ -872,46 +1059,39 @@ function _resetConfirmOptions(){
   if(anyCb)anyCb.checked=false;
 }
 
-// When "any gift" is toggled, show "all collections" instead of the gift name
 function onAnyGiftToggle(){
   const anyCb=document.getElementById('confirm-anygift-cb');
   const gEl=document.getElementById('confirm-gift');
   if(!anyCb||!gEl)return;
-  gEl.textContent=anyCb.checked?'🎲 Все коллекции':(selectedGift||'—');
+  gEl.textContent=anyCb.checked?'Все коллекции':(selectedGift||'—');
 }
 
-// === CONFIRM FLOW ===
 function confirmAction(action){
-  // Random doesn't need a collection
   if(action==='random'){
     pendingAction=action;
     document.getElementById('confirm-title').textContent=ACTION_LABELS[action]||action;
-    document.getElementById('confirm-desc').textContent=ACTION_DESCS[action]||'';
     document.getElementById('confirm-gift').textContent='Все коллекции';
     document.getElementById('confirm-filter').textContent=ACTION_LABELS[action]||action;
   } else {
-    const baseAct=action.replace(/_[a-z]{2}$/,'').replace(/_/g,''); // country_in → country
+    const baseAct=action.replace(/_[a-z]{2}$/,'').replace(/_/g,'');
     const anyGiftOk=ANYGIFT_ACTIONS.has(baseAct);
     if(!selectedGift && !anyGiftOk){
-      showToast('⚠ Сначала выбери коллекцию');
+      showToast('Сначала выбери тачку');
       if(tg)tg.HapticFeedback?.notificationOccurred('warning');
       return;
     }
     pendingAction=action;
     document.getElementById('confirm-title').textContent=ACTION_LABELS[action]||action;
-    document.getElementById('confirm-desc').textContent=ACTION_DESCS[action]||'';
-    document.getElementById('confirm-gift').textContent=selectedGift||'🎲 Все коллекции';
+    document.getElementById('confirm-gift').textContent=selectedGift||'Все коллекции';
     document.getElementById('confirm-filter').textContent=ACTION_LABELS[action]||action;
   }
 
-  // Show/hide country filter, original toggle, any-gift toggle
   _resetConfirmOptions();
   const baseAct2=action.replace(/_[a-z]{2}$/,'').replace(/_/g,'');
   document.getElementById('confirm-country-wrap').style.display=COUNTRY_ACTIONS.has(action)?'':'none';
   document.getElementById('confirm-orig-wrap').style.display=ORIG_ACTIONS.has(action)?'':'none';
   const anyWrap=document.getElementById('confirm-anygift-wrap');
   if(anyWrap)anyWrap.style.display=ANYGIFT_ACTIONS.has(baseAct2)?'':'none';
-  // If no gift was selected but this action supports "any gift", pre-check it
   const anyCb=document.getElementById('confirm-anygift-cb');
   if(anyCb&&ANYGIFT_ACTIONS.has(baseAct2)&&!selectedGift){anyCb.checked=true;onAnyGiftToggle();}
 
@@ -924,28 +1104,24 @@ function doConfirmedAction(){
   if(!pendingAction)return;
   if(tg)tg.HapticFeedback?.impactOccurred('heavy');
 
-  // "Any gift" (all collections) for country search → random scan by country.
-  // pendingAction вида country_in → берём код страны, шлём random+код.
   const anyCb=document.getElementById('confirm-anygift-cb');
   const baseAct=pendingAction.replace(/_[a-z]{2}$/,'').replace(/_/g,'');
   if(anyCb&&anyCb.checked&&ANYGIFT_ACTIONS.has(baseAct)){
     const m=pendingAction.match(/_([a-z]{2})$/);
-    const cc=(m&&m[1]!=='al')?m[1]:''; // country_all → пусто (все страны)
-    deepLink('random'+cc); // randomin / randomru / random
+    const cc=(m&&m[1]!=='al')?m[1]:'';
+    deepLink('random'+cc);
     return;
   }
 
-  // Build action suffix: country + orig
   let suffix='';
   if(COUNTRY_ACTIONS.has(pendingAction)&&selectedCountry!=='all'){
-    suffix+=selectedCountry; // 'cn' or 'ru'
+    suffix+=selectedCountry;
   }
   const origCb=document.getElementById('confirm-orig-cb');
   if(ORIG_ACTIONS.has(pendingAction)&&origCb&&origCb.checked){
     suffix+='orig';
   }
 
-  // country_XX → "countryXX__Gift", market_XX → "marketXX__Gift"
   const safeAction=pendingAction.replace(/_/g,'')+suffix;
 
   if(pendingAction==='random'){
@@ -956,10 +1132,8 @@ function doConfirmedAction(){
   deepLink(safeAction+'__'+toApiName(selectedGift));
 }
 
-// Direct send (no confirmation needed)
 function sendAction(action){
   if(tg)tg.HapticFeedback?.impactOccurred('medium');
-  // Действия без выбора коллекции
   if(action==='reset_viewed'||action==='numbers'||action==='nft_usernames'){
     deepLink(action);
     return;
@@ -969,16 +1143,15 @@ function sendAction(action){
   deepLink(safeAction+'__'+toApiName(selectedGift));
 }
 
-// Неулучшенные подарки — популярные коллекции
 (function(){
   const popular=['Plush Pepe','Durov','Homunculus','Jelly Bunny','Perfume Bottle','Vintage Cigar','Sakura Flower','Electric Skull','Diamond Ring','Signet Ring','Love Potion','Astral Shard','Hypno Lollipop','Mad Pumpkin','Crystal Ball','Genie Lamp','Trapped Heart'];
   const sec=document.getElementById('non-upgraded-section');
   if(!sec)return;
   sec.innerHTML=popular.map(g=>{
     const safe=g.replace(/'/g,"\\'");
-    return `<div class="acard" onclick="sendNonUpgraded('${safe}')">
-      <div class="aico v6"><svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
-      <div class="atxt"><div class="at">${g}</div><div class="ad">Найти владельцев неулучшенных</div></div>
+    return `<div class="card" onclick="sendNonUpgraded('${safe}')">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
+      <div class="txt"><div class="t">${g}</div><div class="d">Найти неулучшенные</div></div>
       <div class="arr"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>`;
   }).join('');
@@ -988,9 +1161,8 @@ function sendNonUpgraded(gift){
   deepLink('nonupgraded__'+toApiName(gift));
 }
 
-// === COMBO SEARCH ===
 const COMBO_MAX=6;
-let comboGifts=[];          // display names
+let comboGifts=[];
 let comboCountry='all';
 
 function renderComboGifts(filter){
@@ -1001,25 +1173,25 @@ function renderComboGifts(filter){
   el.innerHTML=filtered.map(x=>`
     <div class="crow${comboGifts.includes(x.name)?' sel':''}" onclick="toggleComboGift('${x.name.replace(/'/g,"\\'")}')">
       <div class="cname">${x.name}</div>
-      <div class="cnum">#${x.i+1}</div>
-      <div class="ccheck"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="cnum">#${String(x.i+1).padStart(3,'0')}</div>
+      <div class="ccheck"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
     </div>`).join('');
-  if(!filtered.length) el.innerHTML='<div style="padding:16px;text-align:center;color:var(--t3);font-size:13px">Ничего не найдено</div>';
+  if(!filtered.length) el.innerHTML='<div style="padding:18px;text-align:center;color:var(--t4);font-size:12px;font-family:var(--mono)">— Пусто</div>';
   updateComboLabel();
 }
 
 function updateComboLabel(){
   const el=document.getElementById('combo-sel-label');
   if(!el)return;
-  if(comboGifts.length){el.textContent='✓ Выбрано: '+comboGifts.length+' ('+comboGifts.join(', ')+')';el.classList.remove('empty');}
-  else{el.textContent='Ничего не выбрано';el.classList.add('empty');}
+  if(comboGifts.length){el.textContent='> '+comboGifts.length+' / '+comboGifts.join(', ');el.classList.remove('empty');}
+  else{el.textContent='— Ничего не выбрано';el.classList.add('empty');}
 }
 
 function toggleComboGift(name){
   const idx=comboGifts.indexOf(name);
   if(idx>=0){comboGifts.splice(idx,1);}
   else{
-    if(comboGifts.length>=COMBO_MAX){showToast('⚠ Максимум '+COMBO_MAX+' коллекций');if(tg)tg.HapticFeedback?.notificationOccurred('warning');return;}
+    if(comboGifts.length>=COMBO_MAX){showToast('Максимум '+COMBO_MAX+' коллекций');if(tg)tg.HapticFeedback?.notificationOccurred('warning');return;}
     comboGifts.push(name);
   }
   renderComboGifts(document.getElementById('combo-gift-search').value);
@@ -1033,16 +1205,8 @@ function setComboCountry(btn){
   if(tg)tg.HapticFeedback?.selectionChanged();
 }
 
-function resetCombo(){
-  comboGifts=[];comboCountry='all';
-  ['combo-girls','combo-orig','combo-market'].forEach(id=>{const c=document.getElementById(id);if(c)c.checked=false;});
-  document.querySelectorAll('.combo-cf').forEach(b=>b.classList.toggle('active',b.dataset.country==='all'));
-  const s=document.getElementById('combo-gift-search');if(s)s.value='';
-  renderComboGifts('');
-}
-
 function runCombo(){
-  if(!comboGifts.length){showToast('⚠ Выбери хотя бы одну коллекцию');if(tg)tg.HapticFeedback?.notificationOccurred('warning');return;}
+  if(!comboGifts.length){showToast('Выбери хотя бы одну');if(tg)tg.HapticFeedback?.notificationOccurred('warning');return;}
   let flags='';
   if(document.getElementById('combo-girls').checked)flags+='g';
   if(document.getElementById('combo-orig').checked)flags+='o';
@@ -1051,7 +1215,7 @@ function runCombo(){
   const cc=comboCountry==='all'?'xx':comboCountry;
   const giftStr=comboGifts.map(toApiName).join('-');
   const param='combo__'+cc+'_'+flags+'__'+giftStr;
-  if(param.length>64){showToast('⚠ Слишком много коллекций — убери пару');if(tg)tg.HapticFeedback?.notificationOccurred('warning');return;}
+  if(param.length>64){showToast('Слишком много — убери пару');if(tg)tg.HapticFeedback?.notificationOccurred('warning');return;}
   if(tg)tg.HapticFeedback?.impactOccurred('heavy');
   deepLink(param);
 }
